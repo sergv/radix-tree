@@ -1,0 +1,106 @@
+-- Created     :  13 August 2018
+
+name:
+  radix-tree
+version:
+  0.1.0.0
+synopsis:
+  TODO
+description:
+  TODO
+license:
+  BSD3
+-- license-file:
+--   LICENSE
+author:
+  Sergey Vinokurov
+maintainer:
+  Sergey Vinokurov <serg.foo@gmail.com>
+
+cabal-version:
+  >= 1.16
+build-type:
+  Simple
+
+-- build-type: Custom
+--
+-- custom-setup
+--   setup-depends:
+--     base >= 4.7,
+--     Cabal >= 1.16
+
+library
+  exposed-modules:
+    Data.RadixTree
+    Data.RadixTree.Internal
+  hs-source-dirs:
+    src
+  build-depends:
+    base >= 4.7,
+    bytestring,
+    containers,
+    deepseq,
+    primitive
+  default-language:
+    Haskell2010
+  ghc-options:
+    -Wall
+    -fwarn-name-shadowing
+    -fno-warn-type-defaults
+  if impl(ghc >= 8.0)
+    ghc-options:
+      -Wall-missed-specialisations
+      -Wcompat
+      -Whi-shadowing
+      -Widentities
+      -Wincomplete-record-updates
+      -Wincomplete-uni-patterns
+      -Wmissing-exported-signatures
+  if impl(ghc >= 8.2)
+    ghc-options:
+      -Wcpp-undef
+      -Wmissing-home-modules
+      -Wunbanged-strict-patterns
+  ghc-prof-options:
+    -fprof-auto
+
+test-suite radix-tree-test
+  type:
+    exitcode-stdio-1.0
+  main-is:
+    test/TestMain.hs
+  build-depends:
+    HUnit,
+    QuickCheck,
+    base,
+    bytestring,
+    containers,
+    tasty,
+    tasty-hunit,
+    tasty-quickcheck,
+    radix-tree
+  default-language:
+    Haskell2010
+  ghc-options:
+    -rtsopts
+    -main-is TestMain
+    -Wall
+    -fwarn-name-shadowing
+    -fno-warn-type-defaults
+  if impl(ghc >= 8.0)
+    ghc-options:
+      -Wall-missed-specialisations
+      -Wcompat
+      -Whi-shadowing
+      -Widentities
+      -Wincomplete-record-updates
+      -Wincomplete-uni-patterns
+      -Wmissing-exported-signatures
+  if impl(ghc >= 8.2)
+    ghc-options:
+      -Wcpp-undef
+      -Wmissing-home-modules
+      -Wunbanged-strict-patterns
+  ghc-prof-options:
+    -fprof-auto
+
