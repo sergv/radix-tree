@@ -37,7 +37,7 @@ import Data.ByteString.Short (ShortByteString)
 import qualified Data.ByteString.Short as BSS
 import qualified Data.ByteString.Short.Internal as BSSI
 import Data.IntMap (IntMap)
-import qualified Data.IntMap as IM
+import qualified Data.IntMap.Strict as IM
 import qualified Data.List as L
 import Data.Primitive.ByteArray
 import Data.Word
