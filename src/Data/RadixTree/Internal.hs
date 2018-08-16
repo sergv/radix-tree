@@ -86,14 +86,14 @@ splitShortByteString n (BSSI.SBS source) = runST $ do
     suffixSize = midSuffixSize - 1
 
 dropShortByteString :: Int -> ShortByteString -> ShortByteString
-dropShortByteString n (BSSI.SBS source) = runST $ do
+dropShortByteString !n (BSSI.SBS source) = runST $ do
   dest <- newByteArray size
   copyByteArray dest 0 source' n size
   ByteArray dest# <- unsafeFreezeByteArray dest
   pure $ BSSI.SBS dest#
   where
     source' = ByteArray source
-    size = sizeofByteArray source' - n
+    !size = sizeofByteArray source' - n
 
 data Mismatch
   = IsPrefix
@@ -155,12 +155,16 @@ mkRadixStr str rest
   | otherwise    = RadixStr Nothing str rest
 
 insert :: forall a. ShortByteString -> a -> RadixTree a -> RadixTree a
-insert key value = go 0
+insert = insert'
+
+{-# INLINE insert' #-}
+insert' :: forall a. ShortByteString -> a -> RadixTree a -> RadixTree a
+insert' key value = go 0
   where
     len = BSS.length key
 
     readKey :: Int -> Int
-    readKey = fromIntegral . BSSI.index key -- unsafeIndex key
+    readKey = fromIntegral . BSSI.unsafeIndex key
 
     go :: Int -> RadixTree a -> RadixTree a
     go i
@@ -206,50 +210,54 @@ insert key value = go 0
         RadixNode _ children -> RadixNode (Just value) children
         RadixStr _ key' rest -> RadixStr (Just value) key' rest
 
--- stripPrefixShortByteString :: ShortByteString -> ShortByteString -> Maybe ShortByteString
--- stripPrefixShortByteString (BSSI.SBS small) bigBS@(BSSI.SBS big)
---   | smallSize > bigSize = Nothing
---   | otherwise           =
---     case findMismatch 0 of
---       Nothing -> Nothing
---       Just i  -> Just $ dropShortByteString i bigBS
---   where
---     small' = ByteArray small
---     big'   = ByteArray big
---
---     smallSize = sizeofByteArray small'
---     bigSize   = sizeofByteArray big'
---
---     findMismatch :: Int -> Maybe Int
---     findMismatch !i
---       | i == smallSize
---       = Just i
---       | (indexByteArray small' i :: Word8) == indexByteArray big' i
---       = findMismatch $ i + 1
---       | otherwise
---       = Nothing
+canStripPrefixFromShortByteString
+  :: Int -> ShortByteString -> ShortByteString -> Bool
+canStripPrefixFromShortByteString bigStart (BSSI.SBS small) (BSSI.SBS big)
+  | bigStart + smallSize > bigSize = False
+  | otherwise                      = findMismatch 0
+  where
+    small' = ByteArray small
+    big'   = ByteArray big
+
+    smallSize = sizeofByteArray small'
+    bigSize   = sizeofByteArray big'
+
+    findMismatch :: Int -> Bool
+    findMismatch !i
+      | i == smallSize
+      = True
+      | (indexByteArray small' i :: Word8) == indexByteArray big' (bigStart + i)
+      = findMismatch $ i + 1
+      | otherwise
+      = False
 
 lookup :: forall a. ShortByteString -> RadixTree a -> Maybe a
-lookup key = go (BSS.unpack key)
+lookup key = go 0
   where
-    -- TODO: benchmark implementation that does not convert key to a list.
-    go :: [Word8] -> RadixTree a -> Maybe a
-    go [] = \case
-      RadixNode val _  -> val
-      RadixStr val _ _ -> val
-    go wsOrig@(w : ws) = \case
+    len = BSS.length key
+
+    readKey :: Int -> Int
+    readKey = fromIntegral . BSSI.unsafeIndex key
+
+    go :: Int -> RadixTree a -> Maybe a
+    go !n tree
+      | n == len
+      = case tree of
+        RadixNode val _  -> val
+        RadixStr val _ _ -> val
+      | otherwise
+      = case tree of
       RadixNode _ children      ->
-        IM.lookup (fromIntegral w) children >>= go ws
-      RadixStr _ packedKey rest ->
-        -- case stripPrefixShortByteString packedKey key of
-        --   Nothing -> Nothing
-         case L.stripPrefix (BSS.unpack packedKey) wsOrig of
-           Nothing  -> Nothing
-           Just ws' -> go ws' rest
+        IM.lookup (readKey n) children >>= go (n + 1)
+      RadixStr _ packedKey rest
+        | canStripPrefixFromShortByteString n packedKey key
+        -> go (n + BSS.length packedKey) rest
+        | otherwise
+        -> Nothing
 
 fromList :: [(ShortByteString, a)] -> RadixTree a
 fromList =
-  L.foldl' (\acc (k, v) -> insert k v acc) empty
+  L.foldl' (\acc (k, v) -> insert' k v acc) empty
 
 toList :: RadixTree a -> [(ShortByteString, a)]
 toList = toAscList
