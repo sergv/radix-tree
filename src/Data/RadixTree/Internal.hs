@@ -68,29 +68,33 @@ empty = RadixNode Nothing IM.empty
 
 splitShortByteString :: Int -> ShortByteString -> (ShortByteString, ShortByteString, Word8, ShortByteString)
 splitShortByteString n (BSSI.SBS source) = runST $ do
-  prefix    <- newByteArray prefixSize
-  midSuffix <- newByteArray midSuffixSize
-  suffix    <- newByteArray suffixSize
-  copyByteArray prefix    0 source' 0       prefixSize
-  copyByteArray midSuffix 0 source' n       midSuffixSize
-  copyByteArray suffix    0 source' (n + 1) suffixSize
-  ByteArray prefix#    <- unsafeFreezeByteArray prefix
-  -- TODO: benchmark unsafeInterleaveST here
-  ByteArray midSuffix# <- unsafeInterleaveST $ unsafeFreezeByteArray midSuffix
-  ByteArray suffix#    <- unsafeInterleaveST $ unsafeFreezeByteArray suffix
-  pure (BSSI.SBS prefix#, BSSI.SBS midSuffix#, indexByteArray source' n, BSSI.SBS suffix#)
+  prefix <- newByteArray prefixSize
+  copyByteArray prefix 0 source' 0 prefixSize
+  ByteArray prefix# <- unsafeFreezeByteArray prefix
+  midSuffix         <- unsafeDupableInterleaveST $ do
+    midSuffix <- newByteArray midSuffixSize
+    copyByteArray midSuffix 0 source' n midSuffixSize
+    unsafeFreezeByteArray midSuffix
+  suffix            <- unsafeDupableInterleaveST $ do
+    suffix <- newByteArray suffixSize
+    copyByteArray suffix 0 source' (n + 1) suffixSize
+    unsafeFreezeByteArray suffix
+  pure (BSSI.SBS prefix#, byteArrayToBSS midSuffix, indexByteArray source' n, byteArrayToBSS suffix)
   where
     source' = ByteArray source
     prefixSize = n
     midSuffixSize = sizeofByteArray source' - prefixSize
     suffixSize = midSuffixSize - 1
 
+{-# INLINE byteArrayToBSS #-}
+byteArrayToBSS :: ByteArray -> BSS.ShortByteString
+byteArrayToBSS (ByteArray xs) = BSSI.SBS xs
+
 dropShortByteString :: Int -> ShortByteString -> ShortByteString
 dropShortByteString !n (BSSI.SBS source) = runST $ do
   dest <- newByteArray size
   copyByteArray dest 0 source' n size
-  ByteArray dest# <- unsafeFreezeByteArray dest
-  pure $ BSSI.SBS dest#
+  byteArrayToBSS <$> unsafeFreezeByteArray dest
   where
     source' = ByteArray source
     !size = sizeofByteArray source' - n
@@ -99,21 +103,10 @@ data Mismatch
   = IsPrefix
   | CommonPrefixThenMismatch
       !ShortByteString -- ^ Prefix of node contents common with the key
-      ShortByteString -- ^ Suffix with the first mismatching byte
-      Word8           -- ^ First byte of the suffix
-      ShortByteString -- ^ Rest of node contents, suffix
+      ShortByteString  -- ^ Suffix with the first mismatching byte
+      Word8            -- ^ First byte of the suffix
+      ShortByteString  -- ^ Rest of node contents, suffix
   deriving (Show, Generic)
-
--- instance Pretty Mismatch where
---   pretty = ppGeneric
-
--- indexByteArraySafe
---   :: ByteArray
---   -> Int
---   -> Word8
--- indexByteArraySafe xs i
---   | i < sizeofByteArray xs = indexByteArray xs i
---   | otherwise              = error $ "Index is out of bounds: " ++ show i
 
 analyseMismatch
   :: ShortByteString -- ^ Key
@@ -121,7 +114,6 @@ analyseMismatch
   -> ShortByteString -- ^ Node contents
   -> Mismatch
 analyseMismatch (BSSI.SBS key) !keyOffset nodeContentsBS@(BSSI.SBS nodeContents) =
-  -- case L.find (\i -> (indexByteArray key' i :: Word8) /= indexByteArray nodeContents' i) [0 .. min keyLeft contentsSize] of
   case findMismatch 0 of
     Nothing          -> IsPrefix
     Just mismatchIdx ->
