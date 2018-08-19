@@ -24,6 +24,9 @@ module Data.RadixTree.Internal
   , fromList
   , toList
   , toAscList
+  , keys
+  , keysSet
+  , elems
   ) where
 
 import Prelude hiding (lookup)
@@ -33,13 +36,18 @@ import Control.DeepSeq
 import Control.Monad.ST
 import Control.Monad.ST.Unsafe
 
+import qualified Data.ByteString.Builder as BSB
+import qualified Data.ByteString.Lazy as BSL
 import Data.ByteString.Short (ShortByteString)
 import qualified Data.ByteString.Short as BSS
 import qualified Data.ByteString.Short.Internal as BSSI
+import qualified Data.Foldable as Foldable
 import Data.IntMap (IntMap)
 import qualified Data.IntMap.Strict as IM
 import qualified Data.List as L
 import Data.Primitive.ByteArray
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Word
 import GHC.Generics (Generic)
 
@@ -55,13 +63,6 @@ data RadixTree a
   deriving (Show, Functor, Foldable, Traversable, Generic)
 
 instance NFData a => NFData (RadixTree a)
-
--- -- | Path within a RadixTree.
--- data RadixPath
---   = Here
---   | SkipRadixStr !RadixPath
---   | Dive !Word8 !RadixPath
---   deriving (Eq, Ord, Show, Generic)
 
 empty :: RadixTree a
 empty = RadixNode Nothing IM.empty
@@ -255,15 +256,33 @@ toList :: RadixTree a -> [(ShortByteString, a)]
 toList = toAscList
 
 toAscList :: forall a. RadixTree a -> [(ShortByteString, a)]
-toAscList = map (first BSS.pack) . go
+toAscList = map (first (BSS.toShort . BSL.toStrict . BSB.toLazyByteString)) . go
   where
-    go :: RadixTree a -> [([Word8], a)]
+    go :: RadixTree a -> [(BSB.Builder, a)]
     go = \case
       RadixNode val children ->
-        maybe id (\val' ys -> ([], val') : ys) val $
-        concatMap (\(c, child) -> map (first (fromIntegral c :)) $ go child) $
+        maybe id (\val' ys -> (mempty, val') : ys) val $
+        concatMap (\(c, child) -> map (first (BSB.word8 (fromIntegral c) <>)) $ go child) $
         IM.toAscList children
       RadixStr val packedKey rest ->
-        maybe id (\val' ys -> ([], val') : ys) val $
-        map (first (BSS.unpack packedKey ++)) $
+        maybe id (\val' ys -> (mempty, val') : ys) val $
+        map (first (BSB.shortByteString packedKey <>)) $
         go rest
+
+keys :: RadixTree a -> [ShortByteString]
+keys = map (BSS.toShort . BSL.toStrict . BSB.toLazyByteString) . go
+  where
+    go :: RadixTree a -> [BSB.Builder]
+    go = \case
+      RadixNode _ children ->
+        concatMap (\(c, child) -> map (BSB.word8 (fromIntegral c) <>) $ go child) $
+        IM.toAscList children
+      RadixStr _ packedKey rest ->
+        map (BSB.shortByteString packedKey <>) $
+        go rest
+
+keysSet :: RadixTree a -> Set ShortByteString
+keysSet = S.fromDistinctAscList . keys
+
+elems :: RadixTree a -> [a]
+elems = Foldable.toList

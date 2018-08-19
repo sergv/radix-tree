@@ -14,6 +14,9 @@ module Data.RadixTree
   , fromList
   , toList
   , toAscList
+  , keys
+  , keysSet
+  , elems
   ) where
 
 import Prelude hiding (lookup)
