@@ -60,7 +60,7 @@ properties :: TestTree
 properties = testGroup "Properties" [qcProps]
 
 qcProps :: TestTree
-qcProps =  testGroup "radix tree"
+qcProps = adjustOption (\(QuickCheckTests n) -> QuickCheckTests (max 10000 n)) $ testGroup "radix tree"
   [ QC.testProperty "∀ t: RT.lookup k (RT.insert k v t) == v" $
     \(t :: RadixTree A) (k :: ShortByteString) (v :: A) ->
       RT.lookup k (RT.insert k v t) == Just v
