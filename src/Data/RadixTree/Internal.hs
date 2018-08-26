@@ -48,8 +48,6 @@ import Control.DeepSeq
 import Control.Monad.ST
 import Control.Monad.ST.Unsafe
 
-import qualified Data.ByteString.Builder as BSB
-import qualified Data.ByteString.Lazy as BSL
 import Data.ByteString.Short (ShortByteString)
 import qualified Data.ByteString.Short as BSS
 import qualified Data.ByteString.Short.Internal as BSSI
@@ -129,21 +127,10 @@ singletonShortByteString !c = runST $ do
 unsafeHeadeShortByteString :: ShortByteString -> Word8
 unsafeHeadeShortByteString = (`BSSI.unsafeIndex` 0)
 
--- consShortByteString :: Word8 -> ShortByteString -> ShortByteString
--- consShortByteString c (BSSI.SBS source) = runST $ do
---   dest <- newByteArray $! sz + 1
---   writeByteArray dest 0 c
---   copyByteArray dest 1 source' 0 sz
---   byteArrayToBSS <$> unsafeFreezeByteArray dest
---   where
---     source' = ByteArray source
---     !sz = sizeofByteArray source'
-
 data Mismatch
   = IsPrefix
   | CommonPrefixThenMismatch
       !ShortByteString -- ^ Prefix of node contents common with the key
-      -- !Word            -- ^ Last byte of the key that caused mismatch
       ShortByteString  -- ^ Suffix with the first mismatching byte
       Word8            -- ^ First byte of the suffix that caused mismatch
       ShortByteString  -- ^ Rest of node contents, suffix
@@ -344,30 +331,30 @@ toList = toAscList
 
 -- | O(n) Convert a radix tree to an ascending list of key-value pairs.
 toAscList :: forall a. RadixTree a -> [(ShortByteString, a)]
-toAscList = map (first (BSS.toShort . BSL.toStrict . BSB.toLazyByteString)) . go
+toAscList = map (first BSS.pack) . go
   where
-    go :: RadixTree a -> [(BSB.Builder, a)]
+    go :: RadixTree a -> [([Word8], a)]
     go = \case
       RadixNode val children ->
-        maybe id (\val' ys -> (mempty, val') : ys) val $
-        IM.foldMapWithKey (\c child -> map (first (BSB.word8 (fromIntegral c) <>)) $ go child) children
+        maybe id (\val' ys -> ([], val') : ys) val $
+        IM.foldMapWithKey (\c child -> map (first (fromIntegral c :)) $ go child) children
       RadixStr val packedKey rest ->
-        maybe id (\val' ys -> (mempty, val') : ys) val $
-        map (first (BSB.shortByteString packedKey <>)) $
+        maybe id (\val' ys -> ([], val') : ys) val $
+        map (first (BSS.unpack packedKey ++)) $
         go rest
 
 -- | O(n) Get all keys stored in a radix tree.
 keys :: RadixTree a -> [ShortByteString]
-keys = map (BSS.toShort . BSL.toStrict . BSB.toLazyByteString) . go
+keys = map BSS.pack . go
   where
-    go :: RadixTree a -> [BSB.Builder]
+    go :: RadixTree a -> [[Word8]]
     go = \case
       RadixNode val children ->
-        maybe id (\_ ys -> mempty : ys) val $
-        IM.foldMapWithKey (\c child -> map (BSB.word8 (fromIntegral c) <>) $ go child) children
+        maybe id (\_ ys -> [] : ys) val $
+        IM.foldMapWithKey (\c child -> map (fromIntegral c :) $ go child) children
       RadixStr val packedKey rest ->
-        maybe id (\_ ys -> mempty : ys) val $
-        map (BSB.shortByteString packedKey <>) $
+        maybe id (\_ ys -> [] : ys) val $
+        map (BSS.unpack packedKey <>) $
         go rest
 
 -- | O(n) Get set of all keys stored in a radix tree.
