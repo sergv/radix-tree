@@ -1,33 +1,29 @@
--- Created     :  13 August 2018
-
 name:
   radix-tree
 version:
-  0.1.0.0
+  0.1
 synopsis:
-  TODO
+  Radix tree data structive over short byte-strings
 description:
-  TODO
+  This module provides a memory-efficient map from
+  Data.ByteString.Short to arbitrary values implemented as a radix
+  tree datastructure. Memory efficiency is achieved by sharing common
+  prefixes of all keys.
 license:
   BSD3
--- license-file:
---   LICENSE
+license-file:
+  LICENSE
 author:
   Sergey Vinokurov
 maintainer:
   Sergey Vinokurov <serg.foo@gmail.com>
+copyright:
+  (c) 2018 Sergey Vinokurov
 
 cabal-version:
   >= 1.16
 build-type:
   Simple
-
--- build-type: Custom
---
--- custom-setup
---   setup-depends:
---     base >= 4.7,
---     Cabal >= 1.16
 
 library
   exposed-modules:

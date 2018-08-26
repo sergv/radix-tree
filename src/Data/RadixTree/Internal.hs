@@ -4,6 +4,10 @@
 -- Copyright   :  (c) Sergey Vinokurov 2018
 -- License     :  BSD3-style (see LICENSE)
 -- Maintainer  :  serg.foo@gmail.com
+--
+-- This is an internal module that exposes innards of the 'RadixTree'
+-- data structure. This API may change in any new release, even in a
+-- patch release - depend on it at your own risk.
 ----------------------------------------------------------------------------
 
 {-# LANGUAGE BangPatterns        #-}
@@ -16,10 +20,13 @@
 {-# LANGUAGE MagicHash           #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
+{-# OPTIONS_HADDOCK not-home #-}
+
 module Data.RadixTree.Internal
   ( RadixTree(..)
   , empty
   , null
+  , size
   , insert
   , insertWith
   , lookup
@@ -32,7 +39,6 @@ module Data.RadixTree.Internal
   , mapMaybe
   , union
   , unionWith
-  , size
   ) where
 
 import Prelude hiding (lookup, null)
@@ -59,6 +65,10 @@ import Data.Word
 import GHC.Generics (Generic)
 
 -- | A tree data structure that efficiently indexes values by string keys.
+--
+-- This type can be more memory-efficient than 'Data.Map' because it combines
+-- common prefixes of all keys. Specific savings will vary depending on
+-- concrete data set.
 data RadixTree a
   = RadixNode
       !(Maybe a)
@@ -71,6 +81,7 @@ data RadixTree a
 
 instance NFData a => NFData (RadixTree a)
 
+-- | Radix tree with no elements.
 empty :: RadixTree a
 empty = RadixNode Nothing IM.empty
 
@@ -196,16 +207,26 @@ mkRadixStr str rest
   | BSS.null str = rest
   | otherwise    = RadixStr Nothing str rest
 
--- | TODO: prove this function correct.
+-- TODO: prove following function correct.
+
+-- | Check whether radix tree is empty
 null :: RadixTree a -> Bool
 null = \case
   RadixNode Nothing children -> IM.null children
   RadixStr Nothing _ rest    -> null rest
   _                          -> False
 
+-- | O(n) Get number of elements in a radix tree.
+size :: RadixTree a -> Int
+size = length
+
+-- | Add new element to a radix tree.
 insert :: forall a. ShortByteString -> a -> RadixTree a -> RadixTree a
 insert = insertWith const
 
+-- | Add new element to a radix tree. If an element was already present for
+-- the given key, use supplied funciton @f@ to produce a new value. The
+-- function will be called like this @f newValue oldValue@.
 insertWith :: forall a. (a -> a -> a) -> ShortByteString -> a -> RadixTree a -> RadixTree a
 insertWith = insert'
 
@@ -285,6 +306,7 @@ canStripPrefixFromShortByteString bigStart (BSSI.SBS small) (BSSI.SBS big)
       | otherwise
       = False
 
+-- | O(length(key)) Try to find a value associated with the given key.
 lookup :: forall a. ShortByteString -> RadixTree a -> Maybe a
 lookup key = go 0
   where
@@ -309,13 +331,18 @@ lookup key = go 0
         | otherwise
         -> Nothing
 
+-- | Construct a radix tree from list of key-value pairs. If some key
+-- appears twice in the input list, later occurrences will override
+-- earlier ones.
 fromList :: [(ShortByteString, a)] -> RadixTree a
 fromList =
   L.foldl' (\acc (k, v) -> insert' const k v acc) empty
 
+-- | O(n) Convert a radix tree to a list of key-value pairs.
 toList :: RadixTree a -> [(ShortByteString, a)]
 toList = toAscList
 
+-- | O(n) Convert a radix tree to an ascending list of key-value pairs.
 toAscList :: forall a. RadixTree a -> [(ShortByteString, a)]
 toAscList = map (first (BSS.toShort . BSL.toStrict . BSB.toLazyByteString)) . go
   where
@@ -329,6 +356,7 @@ toAscList = map (first (BSS.toShort . BSL.toStrict . BSB.toLazyByteString)) . go
         map (first (BSB.shortByteString packedKey <>)) $
         go rest
 
+-- | O(n) Get all keys stored in a radix tree.
 keys :: RadixTree a -> [ShortByteString]
 keys = map (BSS.toShort . BSL.toStrict . BSB.toLazyByteString) . go
   where
@@ -342,12 +370,16 @@ keys = map (BSS.toShort . BSL.toStrict . BSB.toLazyByteString) . go
         map (BSB.shortByteString packedKey <>) $
         go rest
 
+-- | O(n) Get set of all keys stored in a radix tree.
 keysSet :: RadixTree a -> Set ShortByteString
 keysSet = S.fromDistinctAscList . keys
 
+-- | O(n) Get all values stored in a radix tree.
 elems :: RadixTree a -> [a]
 elems = Foldable.toList
 
+-- | O(n) Map a function that can remove some existing elements over a
+-- radix tree.
 mapMaybe :: forall a b. (a -> Maybe b) -> RadixTree a -> RadixTree b
 mapMaybe f = fromMaybe empty . go
   where
@@ -423,7 +455,3 @@ unionWith f = go
                   , mkRadixStr (dropShortByteString (BSSI.length prefix + 1) str) rest
                   )
                 ]
-
--- | O(n) Get number of elements in a radix tree
-size :: RadixTree a -> Int
-size = length
