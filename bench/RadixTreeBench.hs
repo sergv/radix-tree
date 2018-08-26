@@ -1,15 +1,7 @@
-----------------------------------------------------------------------------
--- |
--- Module      :  RadixTreeBench
--- Copyright   :  (c) Sergey Vinokurov 2018
--- License     :  BSD3-style (see LICENSE)
--- Maintainer  :  serg.foo@gmail.com
-----------------------------------------------------------------------------
-
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module RadixTreeBench (main) where
+module Main (main) where
 
 import Control.Arrow
 import Control.DeepSeq

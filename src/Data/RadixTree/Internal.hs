@@ -57,6 +57,7 @@ import qualified Data.IntMap.Strict as IM
 import qualified Data.List as L
 import Data.Maybe (fromMaybe)
 import Data.Primitive.ByteArray
+import Data.Semigroup as Semigroup
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Word
@@ -83,16 +84,25 @@ instance NFData a => NFData (RadixTree a)
 empty :: RadixTree a
 empty = RadixNode Nothing IM.empty
 
+{-# INLINE interleaveST #-}
+interleaveST :: ST s a -> ST s a
+interleaveST =
+#if MIN_VERSION_base(4, 10, 0)
+    unsafeDupableInterleaveST
+#else
+    unsafeInterleaveST
+#endif
+
 splitShortByteString :: Int -> ShortByteString -> (ShortByteString, ShortByteString, Word8, ShortByteString)
 splitShortByteString n (BSSI.SBS source) = runST $ do
   prefix <- newByteArray prefixSize
   copyByteArray prefix 0 source' 0 prefixSize
   ByteArray prefix# <- unsafeFreezeByteArray prefix
-  midSuffix         <- unsafeDupableInterleaveST $ do
+  midSuffix         <- interleaveST $ do
     midSuffix <- newByteArray midSuffixSize
     copyByteArray midSuffix 0 source' n midSuffixSize
     unsafeFreezeByteArray midSuffix
-  suffix            <- unsafeDupableInterleaveST $ do
+  suffix            <- interleaveST $ do
     suffix <- newByteArray suffixSize
     copyByteArray suffix 0 source' (n + 1) suffixSize
     unsafeFreezeByteArray suffix
@@ -183,7 +193,7 @@ mkRadixStrFuse :: Maybe a -> ShortByteString -> RadixTree a -> Maybe (RadixTree 
 mkRadixStrFuse val str rest =
   case (val, rest) of
     (val',    RadixStr Nothing str' rest') ->
-      Just $ RadixStr val' (str <> str') rest'
+      Just $ RadixStr val' (str Semigroup.<> str') rest'
     (Nothing, node)
       | null node -> Nothing
     (val', rest') ->

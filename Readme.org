@@ -14,7 +14,7 @@
 
 ** Supported GHC versions
 
-Tested with GHC `8.0.2`, `8.2.2`, `8.4.2`.
+Tested with GHC ~8.0.2~, ~8.2.2~, ~8.4.3~.
 
 ** Benchmark
    Running on my laptop equipped with i7-4710MQ 2.5-3.3GHz CPU I get:
@@ -49,6 +49,5 @@ toList/Data.HashMap                      mean 3.363 ms  ( +- 118.2 μs  )
 union/Data.RadixTree                     mean 17.32 ms  ( +- 368.5 μs  )
 union/Data.Map                           mean 11.59 ms  ( +- 277.2 μs  )
 union/Data.HashMap                       mean 20.78 ms  ( +- 1.427 ms  )
-
 #+END_EXAMPLE
 

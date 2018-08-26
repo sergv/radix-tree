@@ -10,7 +10,7 @@
 
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module TestMain (main) where
+module Main (main) where
 
 import Data.ByteString.Short (ShortByteString)
 import qualified Data.ByteString.Short as BSS

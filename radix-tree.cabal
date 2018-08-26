@@ -2,6 +2,8 @@ name:
   radix-tree
 version:
   0.1
+category:
+  Data Structures
 synopsis:
   Radix tree data structive over short byte-strings
 description:
@@ -19,11 +21,19 @@ maintainer:
   Sergey Vinokurov <serg.foo@gmail.com>
 copyright:
   (c) 2018 Sergey Vinokurov
+tested-with:
+  GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.3
 
 cabal-version:
   >= 1.16
 build-type:
   Simple
+
+homepage: https://github.com/sergv/radix-tree
+
+source-repository head
+    type: git
+    location: https://github.com/sergv/radix-tree.git
 
 library
   exposed-modules:
@@ -32,7 +42,7 @@ library
   hs-source-dirs:
     src
   build-depends:
-    base >= 4.7,
+    base >= 4.9 && < 5,
     bytestring,
     containers,
     deepseq,
@@ -56,8 +66,6 @@ library
       -Wcpp-undef
       -Wmissing-home-modules
       -Wunbanged-strict-patterns
-  ghc-prof-options:
-    -fprof-auto
 
 test-suite radix-tree-test
   type:
@@ -67,7 +75,7 @@ test-suite radix-tree-test
   build-depends:
     HUnit,
     QuickCheck,
-    base,
+    base >= 4.9 && < 5,
     bytestring,
     containers,
     tasty,
@@ -78,7 +86,6 @@ test-suite radix-tree-test
     Haskell2010
   ghc-options:
     -rtsopts
-    -main-is TestMain
     -Wall
     -fwarn-name-shadowing
     -fno-warn-type-defaults
@@ -96,8 +103,6 @@ test-suite radix-tree-test
       -Wcpp-undef
       -Wmissing-home-modules
       -Wunbanged-strict-patterns
-  ghc-prof-options:
-    -fprof-auto
 
 benchmark radix-tree-bench
   type:
@@ -107,7 +112,7 @@ benchmark radix-tree-bench
   hs-source-dirs:
     . bench
   build-depends:
-    base >=4.7,
+    base >= 4.9 && < 5,
     bytestring,
     containers,
     deepseq,
@@ -120,7 +125,6 @@ benchmark radix-tree-bench
     Haskell2010
   ghc-options:
     -rtsopts
-    -main-is RadixTreeBench
     -Wall
     -fwarn-name-shadowing
     -fno-warn-type-defaults
@@ -137,5 +141,3 @@ benchmark radix-tree-bench
       -Wcpp-undef
       -Wmissing-home-modules
       -Wunbanged-strict-patterns
-  ghc-prof-options:
-    -fprof-auto
