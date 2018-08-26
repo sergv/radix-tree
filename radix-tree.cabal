@@ -8,7 +8,7 @@ synopsis:
   Radix tree data structive over short byte-strings
 description:
   This module provides a memory-efficient map from
-  Data.ByteString.Short to arbitrary values implemented as a radix
+  Data.ByteString.Short keys to arbitrary values implemented as a radix
   tree datastructure. Memory efficiency is achieved by sharing common
   prefixes of all keys.
 license:
@@ -25,7 +25,7 @@ tested-with:
   GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.3
 
 cabal-version:
-  >= 1.16
+  2.0
 build-type:
   Simple
 
