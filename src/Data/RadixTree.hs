@@ -9,7 +9,9 @@
 module Data.RadixTree
   (  RadixTree
   , empty
+  , null
   , insert
+  , insertWith
   , lookup
   , fromList
   , toList
@@ -17,8 +19,12 @@ module Data.RadixTree
   , keys
   , keysSet
   , elems
+  , mapMaybe
+  , union
+  , unionWith
+  , size
   ) where
 
-import Prelude hiding (lookup)
+import Prelude hiding (lookup, null)
 
 import Data.RadixTree.Internal

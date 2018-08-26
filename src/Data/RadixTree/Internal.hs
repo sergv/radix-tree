@@ -19,7 +19,9 @@
 module Data.RadixTree.Internal
   ( RadixTree(..)
   , empty
+  , null
   , insert
+  , insertWith
   , lookup
   , fromList
   , toList
@@ -27,9 +29,13 @@ module Data.RadixTree.Internal
   , keys
   , keysSet
   , elems
+  , mapMaybe
+  , union
+  , unionWith
+  , size
   ) where
 
-import Prelude hiding (lookup)
+import Prelude hiding (lookup, null)
 
 import Control.Arrow (first)
 import Control.DeepSeq
@@ -45,6 +51,7 @@ import qualified Data.Foldable as Foldable
 import Data.IntMap (IntMap)
 import qualified Data.IntMap.Strict as IM
 import qualified Data.List as L
+import Data.Maybe (fromMaybe)
 import Data.Primitive.ByteArray
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -92,20 +99,42 @@ byteArrayToBSS :: ByteArray -> BSS.ShortByteString
 byteArrayToBSS (ByteArray xs) = BSSI.SBS xs
 
 dropShortByteString :: Int -> ShortByteString -> ShortByteString
+dropShortByteString 0  src = src
 dropShortByteString !n (BSSI.SBS source) = runST $ do
-  dest <- newByteArray size
-  copyByteArray dest 0 source' n size
+  dest <- newByteArray sz
+  copyByteArray dest 0 source' n sz
   byteArrayToBSS <$> unsafeFreezeByteArray dest
   where
     source' = ByteArray source
-    !size = sizeofByteArray source' - n
+    !sz = sizeofByteArray source' - n
+
+singletonShortByteString :: Word8 -> ShortByteString
+singletonShortByteString !c = runST $ do
+  dest <- newByteArray 1
+  writeByteArray dest 0 c
+  byteArrayToBSS <$> unsafeFreezeByteArray dest
+
+{-# INLINE unsafeHeadeShortByteString #-}
+unsafeHeadeShortByteString :: ShortByteString -> Word8
+unsafeHeadeShortByteString = (`BSSI.unsafeIndex` 0)
+
+-- consShortByteString :: Word8 -> ShortByteString -> ShortByteString
+-- consShortByteString c (BSSI.SBS source) = runST $ do
+--   dest <- newByteArray $! sz + 1
+--   writeByteArray dest 0 c
+--   copyByteArray dest 1 source' 0 sz
+--   byteArrayToBSS <$> unsafeFreezeByteArray dest
+--   where
+--     source' = ByteArray source
+--     !sz = sizeofByteArray source'
 
 data Mismatch
   = IsPrefix
   | CommonPrefixThenMismatch
       !ShortByteString -- ^ Prefix of node contents common with the key
+      -- !Word            -- ^ Last byte of the key that caused mismatch
       ShortByteString  -- ^ Suffix with the first mismatching byte
-      Word8            -- ^ First byte of the suffix
+      Word8            -- ^ First byte of the suffix that caused mismatch
       ShortByteString  -- ^ Rest of node contents, suffix
   deriving (Show, Generic)
 
@@ -142,17 +171,47 @@ analyseMismatch (BSSI.SBS key) !keyOffset nodeContentsBS@(BSSI.SBS nodeContents)
       | otherwise
       = Just i
 
+mkRadixNodeFuse :: Maybe a -> IntMap (RadixTree a) -> Maybe (RadixTree a)
+mkRadixNodeFuse val children =
+  case val of
+    Nothing | IM.null children
+      -> Nothing
+    val'    | [(c, child)] <- IM.toList children
+      -> Just $ RadixStr val' (singletonShortByteString $ fromIntegral c) child
+    _ -> Just $ RadixNode val children
+
+-- Precondition: input string is non-empty
+mkRadixStrFuse :: Maybe a -> ShortByteString -> RadixTree a -> Maybe (RadixTree a)
+mkRadixStrFuse val str rest =
+  case (val, rest) of
+    (val',    RadixStr Nothing str' rest') ->
+      Just $ RadixStr val' (str <> str') rest'
+    (Nothing, node)
+      | null node -> Nothing
+    (val', rest') ->
+      Just $ RadixStr val' str rest'
+
 mkRadixStr :: ShortByteString -> RadixTree a -> RadixTree a
 mkRadixStr str rest
   | BSS.null str = rest
   | otherwise    = RadixStr Nothing str rest
 
+-- | TODO: prove this function correct.
+null :: RadixTree a -> Bool
+null = \case
+  RadixNode Nothing children -> IM.null children
+  RadixStr Nothing _ rest    -> null rest
+  _                          -> False
+
 insert :: forall a. ShortByteString -> a -> RadixTree a -> RadixTree a
-insert = insert'
+insert = insertWith const
+
+insertWith :: forall a. (a -> a -> a) -> ShortByteString -> a -> RadixTree a -> RadixTree a
+insertWith = insert'
 
 {-# INLINE insert' #-}
-insert' :: forall a. ShortByteString -> a -> RadixTree a -> RadixTree a
-insert' key value = go 0
+insert' :: forall a. (a -> a -> a) -> ShortByteString -> a -> RadixTree a -> RadixTree a
+insert' f key value = go 0
   where
     len = BSS.length key
 
@@ -200,8 +259,10 @@ insert' key value = go 0
                 mid'       = fromIntegral mid
       | otherwise
       = \case
-        RadixNode _ children -> RadixNode (Just value) children
-        RadixStr _ key' rest -> RadixStr (Just value) key' rest
+        RadixNode oldValue children ->
+          RadixNode (Just (maybe value (f value) oldValue)) children
+        RadixStr oldValue key' rest ->
+          RadixStr (Just (maybe value (f value) oldValue)) key' rest
 
 canStripPrefixFromShortByteString
   :: Int -> ShortByteString -> ShortByteString -> Bool
@@ -250,7 +311,7 @@ lookup key = go 0
 
 fromList :: [(ShortByteString, a)] -> RadixTree a
 fromList =
-  L.foldl' (\acc (k, v) -> insert' k v acc) empty
+  L.foldl' (\acc (k, v) -> insert' const k v acc) empty
 
 toList :: RadixTree a -> [(ShortByteString, a)]
 toList = toAscList
@@ -262,8 +323,7 @@ toAscList = map (first (BSS.toShort . BSL.toStrict . BSB.toLazyByteString)) . go
     go = \case
       RadixNode val children ->
         maybe id (\val' ys -> (mempty, val') : ys) val $
-        concatMap (\(c, child) -> map (first (BSB.word8 (fromIntegral c) <>)) $ go child) $
-        IM.toAscList children
+        IM.foldMapWithKey (\c child -> map (first (BSB.word8 (fromIntegral c) <>)) $ go child) children
       RadixStr val packedKey rest ->
         maybe id (\val' ys -> (mempty, val') : ys) val $
         map (first (BSB.shortByteString packedKey <>)) $
@@ -274,10 +334,11 @@ keys = map (BSS.toShort . BSL.toStrict . BSB.toLazyByteString) . go
   where
     go :: RadixTree a -> [BSB.Builder]
     go = \case
-      RadixNode _ children ->
-        concatMap (\(c, child) -> map (BSB.word8 (fromIntegral c) <>) $ go child) $
-        IM.toAscList children
-      RadixStr _ packedKey rest ->
+      RadixNode val children ->
+        maybe id (\_ ys -> mempty : ys) val $
+        IM.foldMapWithKey (\c child -> map (BSB.word8 (fromIntegral c) <>) $ go child) children
+      RadixStr val packedKey rest ->
+        maybe id (\_ ys -> mempty : ys) val $
         map (BSB.shortByteString packedKey <>) $
         go rest
 
@@ -286,3 +347,83 @@ keysSet = S.fromDistinctAscList . keys
 
 elems :: RadixTree a -> [a]
 elems = Foldable.toList
+
+mapMaybe :: forall a b. (a -> Maybe b) -> RadixTree a -> RadixTree b
+mapMaybe f = fromMaybe empty . go
+  where
+    go :: RadixTree a -> Maybe (RadixTree b)
+    go = \case
+      RadixNode val children ->
+        mkRadixNodeFuse (f =<< val) $ IM.mapMaybe go children
+      RadixStr val str rest ->
+        mkRadixStrFuse (f =<< val) str $ fromMaybe empty $ go rest
+
+-- | O(n + m) Combine two radix trees trees. If a key is present in both
+-- trees then the value from left one will be retained.
+union :: RadixTree a -> RadixTree a -> RadixTree a
+union = unionWith const
+
+-- | O(n + m) Combine two trees using supplied function to resolve
+-- values that have the same key in both trees.
+unionWith :: forall a. (a -> a -> a) -> RadixTree a -> RadixTree a -> RadixTree a
+unionWith f = go
+  where
+    combineVals :: Maybe a -> Maybe a -> Maybe a
+    combineVals x y = case (x, y) of
+      (Nothing,   Nothing)   -> Nothing
+      (Nothing,   y'@Just{}) -> y'
+      (x'@Just{}, Nothing)   -> x'
+      (Just x',   Just y')   -> Just $ f x' y'
+
+    go :: RadixTree a -> RadixTree a -> RadixTree a
+    go x y = case (x, y) of
+      (RadixNode val children, RadixNode val' children') ->
+        RadixNode (combineVals val val') (IM.unionWith go children children')
+      (RadixNode val children, RadixStr val' str' rest') ->
+        RadixNode (combineVals val val') $
+          (\g -> IM.alter g h children) $ \child ->
+            Just $!
+            let rest'' = mkRadixStr (dropShortByteString 1 str') rest' in
+            case child of
+              Nothing     -> rest''
+              Just child' -> go child' rest''
+        where
+          h = fromIntegral $ unsafeHeadeShortByteString str'
+      (RadixStr val str rest, RadixNode val' children') ->
+        RadixNode (combineVals val val') $
+          (\g -> IM.alter g h children') $ \child ->
+            Just $!
+            let rest' = mkRadixStr (dropShortByteString 1 str) rest in
+            case child of
+              Nothing     -> rest'
+              Just child' -> go rest' child'
+        where
+          h = fromIntegral $ unsafeHeadeShortByteString str
+      (RadixStr val str rest, RadixStr val' str' rest') ->
+        case analyseMismatch str 0 str' of
+          -- str' is a prefix of str
+          IsPrefix ->
+            RadixStr (combineVals val val') str' $
+              go (mkRadixStr (dropShortByteString (BSS.length str') str) rest) rest'
+          -- str' = prefix + firstMismatchStr' + suffixStr'
+          --      = prefix + midSuffixStr'
+          CommonPrefixThenMismatch prefix midSuffixStr' firstMismatchStr' suffixStr' ->
+            (if BSS.null prefix then id else RadixStr (combineVals val val') prefix) $
+              if BSS.length prefix == BSS.length str
+              then
+                go rest $ RadixStr
+                  (if BSS.null prefix then combineVals val val' else Nothing)
+                  midSuffixStr'
+                  rest'
+              else RadixNode (if BSS.null prefix then combineVals val val' else Nothing) $ IM.fromList
+                [ ( fromIntegral firstMismatchStr'
+                  , mkRadixStr suffixStr' rest'
+                  )
+                , ( fromIntegral $ BSSI.unsafeIndex str $ BSS.length prefix
+                  , mkRadixStr (dropShortByteString (BSSI.length prefix + 1) str) rest
+                  )
+                ]
+
+-- | O(n) Get number of elements in a radix tree
+size :: RadixTree a -> Int
+size = length
