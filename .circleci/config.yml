@@ -6,13 +6,15 @@ jobs:
       image: ubuntu-2004:current
     resource_class: medium
     parameters:
-      version:
+      cabal:
+        type: string
+      ghc:
         type: string
     steps:
       - checkout
       - restore_cache:
           name: Restore
-          key: << parameters.name >>-{{ checksum "radix-tree.cabal" }}
+          key: linux-<< parameters.ghc >>-{{ checksum "radix-tree.cabal" }}
       - run:
           name: Install GHC
           command: |
@@ -35,7 +37,7 @@ jobs:
           command: cabal new-build --enable-tests
       - save_cache:
           name: Cache
-          key: << parameters.name >>-{{ checksum "radix-tree.cabal" }}
+          key: linux-<< parameters.ghc >>-{{ checksum "radix-tree.cabal" }}
           paths:
             - "/root/.cabal"
             - "dist-newstyle"
