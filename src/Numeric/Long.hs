@@ -8,7 +8,6 @@ module Numeric.Long
 
 import           Data.Bits
 import           Data.Char
-import           Numeric (showHex)
 
 
 
