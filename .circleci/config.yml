@@ -12,7 +12,7 @@ jobs:
       - checkout
       - restore_cache:
           name: Restore
-          key: linux-<< parameters.version >>-{{ checksum "radix-tree.cabal" }}
+          key: << parameters.name >>-{{ checksum "radix-tree.cabal" }}
       - run:
           name: Install GHC
           command: |
@@ -35,7 +35,7 @@ jobs:
           command: cabal new-build --enable-tests
       - save_cache:
           name: Cache
-          key: linux-<< parameters.version >>-{{ checksum "radix-tree.cabal" }}
+          key: << parameters.name >>-{{ checksum "radix-tree.cabal" }}
           paths:
             - "/root/.cabal"
             - "dist-newstyle"
