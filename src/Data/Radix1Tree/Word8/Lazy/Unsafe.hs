@@ -199,7 +199,7 @@ unsafeMaxView = unsafeMaxView1
 
 
 
--- | \(\mathcal{O}(1)\texttt{+}, \\mathcal{O}(n_A k_A + n_B k_B)\).
+-- | \(\mathcal{O}(1)\texttt{+}, \mathcal{O}(n_A k_A + n_B k_B)\).
 --   General merge of two trees.
 --
 --   Resulting 'Maybe's and 'Radix1Tree's in argument functions are evaluated to WHNF.

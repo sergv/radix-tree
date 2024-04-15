@@ -48,7 +48,9 @@
 
 module Data.Radix1Tree.Word8.Lazy
   ( LazyRadix1Tree
-  , Radix1Tree (..)
+  , Radix1Tree
+
+  , RadixTree (..)
 
     -- * Key
   , module Data.Radix1Tree.Word8.Key
@@ -449,7 +451,7 @@ subtree :: Feed1 -> Radix1Tree a -> RadixTree a
 subtree = subtree1
 
 {-# INLINE prefix #-}
--- | \(\mathcal{O}(x)\).
+-- | \(\mathcal{O}(1)\texttt{+}, \mathcal{O}(x)\).
 --   Prefix the root of the tree with the given key.
 prefix :: Feed1 -> RadixTree a -> Radix1Tree a
 prefix = prefix1

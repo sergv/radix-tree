@@ -449,7 +449,7 @@ subtree :: Feed -> RadixTree a -> RadixTree a
 subtree = subtree0
 
 {-# INLINE prefix #-}
--- | \(\mathcal{O}(x)\).
+-- | \(\mathcal{O}(1)\texttt{+}, \mathcal{O}(x)\).
 --   Prefix the root of the tree with the given key.
 prefix :: Feed -> RadixTree a -> RadixTree a
 prefix = prefix0

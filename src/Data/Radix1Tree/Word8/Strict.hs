@@ -47,7 +47,7 @@
 
 module Data.Radix1Tree.Word8.Strict
   ( StrictRadix1Tree
-  , Radix1Tree (..)
+  , Radix1Tree
 
   , RadixTree (..)
 
@@ -62,7 +62,7 @@ module Data.Radix1Tree.Word8.Strict
   , toLazy
 
     -- * Single-key
-    -- ** Lookup1
+    -- ** Lookup
   , Data.Radix1Tree.Word8.Strict.lookup
   , Data.Radix1Tree.Word8.Strict.find
   , Data.Radix1Tree.Word8.Strict.member
@@ -108,7 +108,7 @@ module Data.Radix1Tree.Word8.Strict
     -- * Directional
   , Openness (..)
 
-    -- ** Lookup1
+    -- ** Lookup
   , Lookup1 (..)
   , lookupL
   , lookupR
@@ -147,7 +147,7 @@ module Data.Radix1Tree.Word8.Strict
 
     -- * Edges
 
-    -- ** Lookup1
+    -- ** Lookup
     -- | === Min
   , lookupMin
   , lookupMinWithKey
