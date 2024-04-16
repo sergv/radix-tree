@@ -370,7 +370,7 @@ data Radix1Tree a = Bin
                   | Tip
                       {-# UNPACK #-} !ByteArray -- ^ Invariant: non-empty.
                       {-# UNPACK #-} !(Maybe a) -- ^ Invariant: can only be 'Nothing' when
-                                                --   the tree below is v'Bin'.
+                                                --   the tree below is 'Bin'.
                       (Radix1Tree a)
 
                   | Nil
