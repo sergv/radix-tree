@@ -2,8 +2,11 @@ name:          radix-tree
 version:       1.0.0.0
 
 category:      Data Structures
-synopsis:      Radix trees.
+synopsis:      Radix trees
 description:   Radix and PATRICIA trees, both spine-strict and spine-lazy.
+
+               See the <https://github.com/sergv/radix-tree/blob/master/README.md README>
+               for a brief overview of the data structures included in this package.
 
 license:       BSD3
 license-file:  LICENSE
@@ -16,6 +19,9 @@ cabal-version: 2.0
 build-type:    Simple
 
 homepage:      https://github.com/sergv/radix-tree
+
+extra-doc-files: CHANGELOG.md
+                 README.md
 
 source-repository head
   type: git
