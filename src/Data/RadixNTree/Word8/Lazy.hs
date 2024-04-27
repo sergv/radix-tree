@@ -945,7 +945,7 @@ lookup1 (Feed1 w feed) = feed $ \step -> lookup_ step w
 lookup_ :: (x -> Step Word8 x) -> Word8 -> x -> Radix1Tree a -> Maybe a
 lookup_ step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r ->
           go w s $ if w < p
@@ -954,7 +954,7 @@ lookup_ step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n
+            goarr v !z n
               | v == indexByteArray arr n =
                   let n' = n + 1
                   in if n' >= sizeofByteArray arr
@@ -990,7 +990,7 @@ find1 d (Feed1 w feed) = feed $ \step -> find_ d step w
 find_ :: a -> (x -> Step Word8 x) -> Word8 -> x -> Radix1Tree a -> a
 find_ d step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r ->
           go w s $ if w < p
@@ -999,7 +999,7 @@ find_ d step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n
+            goarr v !z n
               | v == indexByteArray arr n =
                   let n' = n + 1
                   in if n' >= sizeofByteArray arr
@@ -1037,7 +1037,7 @@ member1 (Feed1 w feed) = feed $ \step -> member_ step w
 member_ :: (x -> Step Word8 x) -> Word8 -> x -> Radix1Tree a -> Bool
 member_ step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r ->
           go w s $ if w < p
@@ -1046,7 +1046,7 @@ member_ step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n
+            goarr v !z n
               | v == indexByteArray arr n =
                   let n' = n + 1
                   in if n' >= sizeofByteArray arr
@@ -1082,7 +1082,7 @@ subtree1 (Feed1 w feed) = feed $ \step -> subtree_ step w
 subtree_ :: (x -> Step Word8 x) -> Word8 -> x -> Radix1Tree a -> RadixTree a
 subtree_ step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r ->
           go w s $ if w < p
@@ -1091,7 +1091,7 @@ subtree_ step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n
+            goarr v !z n
               | v == indexByteArray arr n =
                   if n + 1 >= sizeofByteArray arr
                     then case step z of
@@ -1124,7 +1124,7 @@ prefix1 (Feed1 w feed) =
 
 {-# INLINE prefix_ #-}
 prefix_ :: (x -> Step Word8 x) -> Word8 -> x -> RadixTree a -> Radix1Tree a
-prefix_ step = \w z (RadixTree mx t) ->
+prefix_ step = \ !w !z (RadixTree mx t) ->
   case mx of
     Nothing ->
       case t of
@@ -1183,7 +1183,7 @@ move_ step = \w s (Cursor point mx dx) ->
     Seam        -> go w s dx
     Plane i arr -> goarr arr mx dx w s i
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r     -> go w s $ if w < p
                                     then l
@@ -1195,7 +1195,7 @@ move_ step = \w s (Cursor point mx dx) ->
 
     goarr arr mx dx = goarr_
       where
-        goarr_ w s n
+        goarr_ w !s n
           | w == indexByteArray arr n =
               let !n' = n + 1
               in case step s of
@@ -1280,7 +1280,7 @@ lookupL_ f openness step = go Lin Nothing
           where
             getThis = f b arr `fmap'` mx
 
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
@@ -1339,7 +1339,7 @@ lookupR_ f openness step = go Lin Nothing
       let !(# b', arr, a #) = unsafeLookupMinWithKey_ b t
       in Just $! f b' arr a
 
-    go b getR w s t =
+    go b getR !w !s t =
       case t of
         Bin p l r ->
           if w < p
@@ -1360,7 +1360,7 @@ lookupR_ f openness step = go Lin Nothing
                 Nil -> Nothing
                 _   -> getMin (Snoc b arr) dx
 
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
@@ -1410,7 +1410,7 @@ adjustL_
   -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 adjustL_ f openness step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r ->
           if w < p
@@ -1424,7 +1424,7 @@ adjustL_ f openness step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
@@ -1473,7 +1473,7 @@ adjustLWithKey_
   -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 adjustLWithKey_ f openness step = go Lin
   where
-    go b w s t =
+    go b !w !s t =
       case t of
         Bin p l r ->
           if w < p
@@ -1487,7 +1487,7 @@ adjustLWithKey_ f openness step = go Lin
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
@@ -1538,7 +1538,7 @@ adjustR_
   -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 adjustR_ f openness step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r ->
           if w < p
@@ -1552,7 +1552,7 @@ adjustR_ f openness step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
@@ -1605,7 +1605,7 @@ adjustRWithKey_
   -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 adjustRWithKey_ f openness step = go Lin
   where
-    go b w s t =
+    go b !w !s t =
       case t of
         Bin p l r ->
           if w < p
@@ -1619,7 +1619,7 @@ adjustRWithKey_ f openness step = go Lin
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
@@ -1667,7 +1667,7 @@ updateL_
   -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 updateL_ f openness step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r ->
           if w < p
@@ -1681,7 +1681,7 @@ updateL_ f openness step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
@@ -1734,7 +1734,7 @@ updateLWithKey_
   -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 updateLWithKey_ f openness step = go Lin
   where
-    go b w s t =
+    go b !w !s t =
       case t of
         Bin p l r ->
           if w < p
@@ -1748,7 +1748,7 @@ updateLWithKey_ f openness step = go Lin
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
@@ -1799,7 +1799,7 @@ updateR_
   -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 updateR_ f openness step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r ->
           if w < p
@@ -1813,7 +1813,7 @@ updateR_ f openness step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
@@ -1868,7 +1868,7 @@ updateRWithKey_
   -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 updateRWithKey_ f openness step = go Lin
   where
-    go b w s t =
+    go b !w !s t =
       case t of
         Bin p l r ->
           if w < p
@@ -1882,7 +1882,7 @@ updateRWithKey_ f openness step = go Lin
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
@@ -1929,7 +1929,7 @@ takeL1 openness (Feed1 w0 feed) = feed $ \step -> takeL_ openness step w0
 takeL_ :: Openness -> (x -> Step Prefix x) -> Prefix -> x -> Radix1Tree a -> Radix1Tree a
 takeL_ openness step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r ->
           if w < p
@@ -1943,7 +1943,7 @@ takeL_ openness step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
@@ -1988,7 +1988,7 @@ takeR1 openness (Feed1 w0 feed) = feed $ \step -> takeR_ openness step w0
 takeR_ :: Openness -> (x -> Step Prefix x) -> Prefix -> x -> Radix1Tree a -> Radix1Tree a
 takeR_ openness step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r ->
           if w < p
@@ -2002,7 +2002,7 @@ takeR_ openness step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
@@ -3730,7 +3730,7 @@ insert1 (Feed1 w feed) a =
 insert_ :: a -> (x -> Step Word8 x) -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 insert_ a step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r
           | beyond p w -> join
@@ -3742,7 +3742,7 @@ insert_ a step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n
+            goarr v !z n
               | v == indexByteArray arr n =
                   if n + 1 >= sizeofByteArray arr
                     then case step z of
@@ -3794,7 +3794,7 @@ insertWith_
   :: (a -> a) -> a -> (x -> Step Word8 x) -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 insertWith_ f a step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r
           | beyond p w -> join
@@ -3806,7 +3806,7 @@ insertWith_ f a step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n
+            goarr v !z n
               | v == indexByteArray arr n =
                   if n + 1 >= sizeofByteArray arr
                     then case step z of
@@ -3856,7 +3856,7 @@ adjust1 f (Feed1 w feed) =
 adjust_ :: (a -> a) -> (x -> Step Word8 x) -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 adjust_ f step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r
           | beyond p w -> t
@@ -3865,7 +3865,7 @@ adjust_ f step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n
+            goarr v !z n
               | v == indexByteArray arr n =
                   if n + 1 >= sizeofByteArray arr
                     then case step z of
@@ -3899,7 +3899,7 @@ delete1 (Feed1 w feed) =
 delete_ :: (x -> Step Word8 x) -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 delete_ step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r
           | beyond p w -> t
@@ -3908,7 +3908,7 @@ delete_ step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n
+            goarr v !z n
               | v == indexByteArray arr n =
                   if n + 1 >= sizeofByteArray arr
                     then case step z of
@@ -3947,7 +3947,7 @@ prune1 openness (Feed1 w feed) =
 prune_ :: Openness -> (x -> Step Word8 x) -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 prune_ openness step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r
           | beyond p w -> t
@@ -3956,7 +3956,7 @@ prune_ openness step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n
+            goarr v !z n
               | v == indexByteArray arr n =
                   if n + 1 >= sizeofByteArray arr
                     then case step z of
@@ -3994,7 +3994,7 @@ update_
   :: (a -> Maybe a) -> (x -> Step Word8 x) -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 update_ f step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r
           | beyond p w -> t
@@ -4003,7 +4003,7 @@ update_ f step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n
+            goarr v !z n
               | v == indexByteArray arr n =
                   if n + 1 >= sizeofByteArray arr
                     then case step z of
@@ -4039,7 +4039,7 @@ alter_
   -> (x -> Step Word8 x) -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 alter_ f step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r
           | beyond p w -> case f Nothing of
@@ -4053,7 +4053,7 @@ alter_ f step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n
+            goarr v !z n
               | v == indexByteArray arr n =
                   if n + 1 >= sizeofByteArray arr
                     then case step z of
@@ -4110,7 +4110,7 @@ shape_
   -> (x -> Step Word8 x) -> Word8 -> x -> Radix1Tree a -> Radix1Tree a
 shape_ f step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r
           | beyond p w -> let !(RadixTree my dy) = f (RadixTree Nothing Nil)
@@ -4125,7 +4125,7 @@ shape_ f step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n
+            goarr v !z n
               | v == indexByteArray arr n =
                   let n' = n + 1
                   in if n' >= sizeofByteArray arr
@@ -4194,7 +4194,7 @@ splitL_
   -> Word8 -> x -> Radix1Tree a -> (# Radix1Tree a, Radix1Tree a #)
 splitL_ openness step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r ->
           if w < p
@@ -4212,7 +4212,7 @@ splitL_ openness step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
@@ -4266,7 +4266,7 @@ splitLookup_
   -> Word8 -> x -> Radix1Tree a -> (# Radix1Tree a, Maybe a, Radix1Tree a #)
 splitLookup_ step = go
   where
-    go w s t =
+    go !w !s t =
       case t of
         Bin p l r ->
           if w < p
@@ -4284,7 +4284,7 @@ splitLookup_ step = go
 
         Tip arr mx dx -> goarr w s 0
           where
-            goarr v z n =
+            goarr v !z n =
               let n' = n + 1
               in case indexByteArray arr n `compare` v of
                    EQ | n' >= sizeofByteArray arr ->
