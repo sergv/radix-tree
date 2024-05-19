@@ -83,7 +83,7 @@ import           Data.RadixNTree.Word8.Key
 import           Data.RadixNTree.Word8.Common
 import           Data.RadixNTree.Word8.Strict
 import           Radix.Exception
-import           Radix.Word.Foundation
+import           Radix.Word8.Foundation
 
 
 
