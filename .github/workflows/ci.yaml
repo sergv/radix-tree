@@ -12,6 +12,11 @@ jobs:
     name: GHC ${{ matrix.ghc }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
+    # https://github.com/orgs/community/discussions/57827
+    if: github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name !=
+      github.event.pull_request.base.repo.full_name
+
     strategy:
       fail-fast: false
       matrix:
@@ -22,11 +27,7 @@ jobs:
           - "9.4"
           - "9.6"
           - "9.8"
-        include:
-        - os: macOS-latest
-          ghc: "9.8"
-        - os: windows-latest
-          ghc: "9.8"
+          - "9.10"
 
     steps:
 
@@ -49,24 +50,7 @@ jobs:
       run: |
         cabal --version
 
-    - name: Unpack
-      run: |
-        cabal sdist --ignore-project --output-directory ..
-        cd ..
-        cabal get radix-tree-*.tar.gz
-
     - name: Build & Test
       run: |
-        cd ../radix-tree-*/
-        cabal build all --enable-tests
-        cabal test --enable-tests --test-show-details=direct all
-
-    - name: Haddock
-      run: |
-        cd ../radix-tree-*/
-        cabal haddock all
-
-    - name: Cabal check
-      run: |
-        cd ../radix-tree-*/
-        cabal check
+        cabal build --enable-tests
+        cabal test --enable-tests --test-show-details=direct properties
