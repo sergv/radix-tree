@@ -7,6 +7,10 @@ defaults:
   run:
     shell: bash
 
+concurrency:
+  group: build-${{ github.ref }}-${{ matrix.os }}-${{ matrix.ghc }}
+  cancel-in-progress: true
+
 jobs:
   main:
     name: GHC ${{ matrix.ghc }} on ${{ matrix.os }}
