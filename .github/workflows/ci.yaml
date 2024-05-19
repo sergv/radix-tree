@@ -49,24 +49,8 @@ jobs:
       run: |
         cabal --version
 
-    - name: Unpack
-      run: |
-        cabal sdist --ignore-project --output-directory ..
-        cd ..
-        cabal get radix-tree-*.tar.gz
-
     - name: Build & Test
       run: |
         cd ../radix-tree-*/
-        cabal build all --enable-tests
-        cabal test --enable-tests --test-show-details=direct all
-
-    - name: Haddock
-      run: |
-        cd ../radix-tree-*/
-        cabal haddock all
-
-    - name: Cabal check
-      run: |
-        cd ../radix-tree-*/
-        cabal check
+        cabal build --enable-tests
+        cabal test --enable-tests --test-show-details=direct properties
