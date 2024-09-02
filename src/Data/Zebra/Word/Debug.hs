@@ -19,7 +19,7 @@ import           Numeric.Long
 import           Radix.Word.Foundation
 import           Radix.Word.Debug
 
-import Debug.Trace
+
 
 -- | \(\mathcal{O}(n)\).
 --   Shows the internal structure of the tree.

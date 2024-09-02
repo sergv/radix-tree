@@ -22,9 +22,9 @@ data S = L -- ^ Left. Masked bit of the prefix above this node must be @0@.
 validPrefix :: Prefix -> S -> Prefix -> Bool
 validPrefix p s o =
   let low = p .&. negate p
-  in even p && case s of
-                 L -> o < p && p - o < low
-                 R -> p < o && o - p < low
+  in case s of
+       L -> o < p && p - o < low
+       R -> p < o && o - p < low
 
 -- | Check whether the key below aligns with the side the branch is on.
 validKey :: Prefix -> S -> Key -> Bool
