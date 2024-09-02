@@ -19,7 +19,7 @@ import           Numeric.Long
 import           Radix.Word.Foundation
 import           Radix.Word.Debug
 
-
+import Debug.Trace
 
 -- | \(\mathcal{O}(n)\).
 --   Shows the internal structure of the tree.
@@ -95,9 +95,9 @@ validate t0 =
     go s q x cL =
       case x of
         Bin p l r
-          | p == 0                 -> Break ZeroPrefix
-          | not $ validBelow q s p -> Break $ PrefixBelow q p
-          | otherwise              ->
+          | p == 0                  -> Break ZeroPrefix
+          | not $ validPrefix q s p -> Break $ PrefixBelow q p
+          | otherwise               ->
               case go L p l cL of
                 Carry cR -> go R p r (Just cR)
                 err      -> err
@@ -108,7 +108,7 @@ validate t0 =
         Nil _ -> Break FoundNil
 
     goTip s q k cL c
-      | k == 0                 = Break ZeroKey
-      | not $ validBelow q s k = Break $ KeyBelow q k
-      | Just x <- cL, x == c   = Break $ NoSwitch c k
-      | otherwise              = Carry c
+      | k == 0               = Break ZeroKey
+      | not $ validKey q s k = Break $ KeyBelow q k
+      | Just x <- cL, x == c = Break $ NoSwitch c k
+      | otherwise            = Carry c

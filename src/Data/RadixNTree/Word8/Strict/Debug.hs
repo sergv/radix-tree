@@ -90,16 +90,16 @@ validate1 = go Lin
     goBin s b q x =
       case x of
         Bin p l r
-          | p == 0                 -> Invalid (Build b) ZeroPrefix
-          | not $ validBelow q s p -> Invalid (Build b) $ PrefixBelow q p
-          | otherwise              ->
+          | p == 0                  -> Invalid (Build b) ZeroPrefix
+          | not $ validPrefix q s p -> Invalid (Build b) $ PrefixBelow q p
+          | otherwise               ->
               case goBin L b p l of
                 Valid -> goBin R b p r
                 err   -> err
 
         Tip arr mx dx
-          | sizeofByteArray arr <= 0                    -> Invalid (Build b) EmptyByteArray
-          | not $ validBelow q s (indexByteArray arr 0) ->
+          | sizeofByteArray arr <= 0                  -> Invalid (Build b) EmptyByteArray
+          | not $ validKey q s (indexByteArray arr 0) ->
               Invalid (Build b) $ KeyBelow q (indexByteArray arr 0)
 
           | Nothing <- mx, Tip _ _ _ <- dx     -> Invalid (Build b) UncompressedTip

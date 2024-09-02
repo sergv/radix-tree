@@ -1963,17 +1963,37 @@ fillRange_ !x !wL !wR = go
 
     goTip k c t
       | wR < k    = if c == x
-                      then join k t pM binM
+                      then if xor wL wR < xor wR k
+                             then join k t pM binM
+                             else let !(# o #) = invert x
+
+                                      !mJ = branchingBit wR k
+
+                                      !pJ = mask wR mJ .|. mJ
+
+                                  in join
+                                       wL (tip wL x)
+                                       pJ (Bin pJ (tip wR o) t)
                       else t
 
       | k < wL    = if c == x
                       then t
-                      else if k == 0
-                             then binM
-                             else join k t pM binM
+                      else if xor k wL > xor wL wR
+                             then join k t pM binM
+                             else let !mJ = branchingBit k wL
 
-      | c == x    = tip wL c
-      | otherwise = tip wR c
+                                      !pJ = mask k mJ .|. mJ
+
+                                  in join
+                                       pJ (Bin pJ t (tip wL x))
+                                       wR (tip wR c)
+
+      | otherwise =
+          let w = if c == x
+                    then wL
+                    else wR
+
+          in tip w c
 
 
 

@@ -58,15 +58,15 @@ validate t =
     go s q x =
       case x of
         Bin p l r
-          | p == 0                 -> Invalid ZeroPrefix
-          | not $ validBelow q s p -> Invalid $ PrefixBelow q p
-          | otherwise              ->
+          | p == 0                  -> Invalid ZeroPrefix
+          | not $ validPrefix q s p -> Invalid $ PrefixBelow q p
+          | otherwise               ->
               case go L p l of
                 Valid -> go R p r
                 err   -> err
 
         Tip k _
-          | not $ validBelow q s k -> Invalid $ KeyBelow q k
-          | otherwise              -> Valid
+          | not $ validKey q s k -> Invalid $ KeyBelow q k
+          | otherwise            -> Valid
 
         Nil -> Invalid $ MalformedBin q
