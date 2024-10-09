@@ -93,7 +93,6 @@ library
 
                     Radix.Common
                     Radix.Exception
-                    Radix.Word8.Common
                     Radix.Word8.Debug
                     Radix.Word8.Foundation
                     Radix.Word.Common
