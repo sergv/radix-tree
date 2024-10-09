@@ -13,9 +13,9 @@
     'Data.Patricia.Word.Strict.Unsafe.Patricia' tree, hence the definitions of
     'Bin' and 'Nil' remain unchanged.
 
-    The only state the resulting 'Radix1Tree' is unable to represent is the
+    The only state the resulting t'Radix1Tree' is unable to represent is the
     value at the root of the tree (for which the key is an empty byte sequence),
-    as such that value is prepended with a special 2-tuple named 'RadixTree'.
+    as such that value is prepended with a special 2-tuple named t'RadixTree'.
  -}
 
 module Data.RadixTree.Word8.Strict.Unsafe

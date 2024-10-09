@@ -2755,7 +2755,7 @@ lookupMin t   = let !(# a #) = unsafeLookupMin t
 -- | \(\mathcal{O}(\min(n,W))\).
 --   Look up a value at the leftmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeLookupMin :: Patricia a -> (# a #)
 unsafeLookupMin t =
   case t of
@@ -2773,7 +2773,7 @@ lookupMinWithKey t   = Just $! unsafeLookupMinWithKey t
 -- | \(\mathcal{O}(\min(n,W))\).
 --   Look up a value at the leftmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeLookupMinWithKey :: Patricia a -> Lookup a
 unsafeLookupMinWithKey t =
   case t of
@@ -2793,7 +2793,7 @@ lookupMax t   = let !(# a #) = unsafeLookupMax t
 -- | \(\mathcal{O}(\min(n,W))\).
 --   Look up a value at the rightmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeLookupMax :: Patricia a -> (# a #)
 unsafeLookupMax t =
   case t of
@@ -2811,7 +2811,7 @@ lookupMaxWithKey t   = Just $! unsafeLookupMaxWithKey t
 -- | \(\mathcal{O}(\min(n,W))\).
 --   Look up a value at the rightmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeLookupMaxWithKey :: Patricia a -> Lookup a
 unsafeLookupMaxWithKey t =
   case t of
@@ -3011,7 +3011,7 @@ data ViewL a = ViewL {-# UNPACK #-} !(Lookup a) !(Patricia a)
 -- | \(\mathcal{O}(\min(n,W))\).
 --   Look up the leftmost value and return it alongside the tree without it.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeMinView :: Patricia a -> ViewL a
 unsafeMinView t =
   case t of
@@ -3038,7 +3038,7 @@ data ViewR a = ViewR !(Patricia a) {-# UNPACK #-} !(Lookup a)
 -- | \(\mathcal{O}(\min(n,W))\).
 --   Look up the rightmost value and return it alongside the tree without it.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeMaxView :: Patricia a -> ViewR a
 unsafeMaxView t =
   case t of

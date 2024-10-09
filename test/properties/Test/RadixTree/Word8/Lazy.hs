@@ -5,6 +5,7 @@ module Test.RadixTree.Word8.Lazy
   ) where
 
 import qualified Data.Radix1Tree.Word8.Lazy as Radix1
+import qualified Data.Radix1Tree.Word8.Lazy.Zipper as Radix1
 import           Data.RadixTree.Word8.Lazy (RadixTree)
 import qualified Data.RadixTree.Word8.Lazy as Radix
 import           Data.RadixTree.Word8.Lazy.Debug
@@ -16,6 +17,7 @@ import           Test.RadixNTree.Word8.Sample
 
 import           Data.Functor.Identity
 import qualified Data.List as List
+import           Data.List.NonEmpty (NonEmpty (..))
 import           Data.Word
 import           Test.Hspec
 
@@ -136,22 +138,68 @@ memberT = Test (==) (Radix.member . Radix.feedBytes) No.member
 subtreeT :: Eq a => TreeT [Word8] a
 subtreeT = Test treeEq (Radix.subtree . Radix.feedBytes) No.subtree
 
-moveSingleT :: Eq a => IdT [Word8] a (Maybe a)
-moveSingleT =
-  Test (==) (\k -> Radix.stop . Radix.move (Radix.feedBytes k) . Radix.cursor)
+descendLookup1T :: Eq a => IdT [Word8] a (Maybe a)
+descendLookup1T =
+  Test (==) (\k r -> let Radix.RadixTree mx t = r
+                     in case k of
+                          []   -> mx
+                          l:ls -> do
+                            ctx <- Radix1.descend (Radix1.feedBytes (l :| ls)) (Left t)
+                            (v, _) <- Radix1.focus ctx
+                            Just v
+            )
             No.lookup
 
-moveThirdsT :: Eq a => IdT [Word8] a (Maybe a)
-moveThirdsT =
-  let thirds xs = let len = length xs
+descendLookup3T :: Eq a => IdT [Word8] a (Maybe a)
+descendLookup3T =
+  let downward    []  mayEi = mayEi
+      downward (k:ks) mayEi = do
+        ei <- mayEi
+        Right <$> Radix1.descend (Radix1.feedBytes (k :| ks)) ei
+
+  in Test (==) (\xs r ->
+                  let Radix.RadixTree mx t = r
+
+                      len = length xs
                       ~(as, ys) = List.splitAt (len `quot` 3) xs
                       ~(bs, cs) = List.splitAt (len `quot` 3) ys
 
-                  in Radix.move (Radix.feedBytes cs)
-                   . Radix.move (Radix.feedBytes bs)
-                   . Radix.move (Radix.feedBytes as)
+                  in case downward cs . downward bs $ downward as (Just $ Left t) of
+                       Just (Right ctx) -> fst <$> Radix1.focus ctx
+                       Just (Left _)    -> mx
+                       _                -> Nothing
+               )
+               No.lookup
 
-  in Test (==) (\k -> Radix.stop . thirds k . Radix.cursor) No.lookup
+descendAdjust3T :: (Eq a, Integral a) => TreeT ([Word8], a) a
+descendAdjust3T =
+  let downward    []  mayEi = mayEi
+      downward (k:ks) mayEi = do
+        ei <- mayEi
+        Right <$> Radix1.descend (Radix1.feedBytes (k :| ks)) ei
+
+  in Test treeEq (\(xs, a) r ->
+                     let Radix.RadixTree mx t = r
+
+                         len = length xs
+                         ~(as, ys) = List.splitAt (len `quot` 3) xs
+                         ~(bs, cs) = List.splitAt (len `quot` 3) ys
+
+                     in case downward cs . downward bs $ downward as (Just $ Left t) of
+                          Just (Right ctx) -> do
+                            case Radix1.focus ctx of
+                              Nothing            -> r
+                              Just (x, reinsert) ->
+                                Radix.RadixTree mx $ reinsert (x + fromIntegral a)
+
+                          Just (Left _)    ->
+                            case mx of
+                              Nothing -> r
+                              Just x  -> Radix.RadixTree (Just $ x + fromIntegral a) t
+
+                          _                -> r
+                 )
+                 (\(k, a) -> No.adjust (+ fromIntegral a) k)
 
 
 
@@ -704,8 +752,9 @@ test = do
     it "find"             $ run unary1  findT
     it "member"           $ run unary1_ memberT
     it "subtree"          $ run unary1_ subtreeT
-    it "move/single"      $ run unary1_ moveSingleT
-    it "move/thirds"      $ run unary1_ moveThirdsT
+    it "descend/lookup1"  $ run unary1_ descendLookup1T
+    it "descend/lookup3"  $ run unary1_ descendLookup3T
+    it "descend/adjust3"  $ run unary1  descendAdjust3T
     it "insert"           $ run unary1  insertT
     it "insertWith"       $ run unary1  insertWithT
     it "adjust"           $ run unary1  adjustT

@@ -79,63 +79,63 @@ import           Data.RadixNTree.Word8.Key
 import           Data.RadixNTree.Word8.Common
 import           Data.RadixNTree.Word8.Lazy
 import           Radix.Exception
-import           Radix.Word.Foundation
+import           Radix.Word8.Foundation
 
 
 
 -- | \(\mathcal{O}(k)\).
 --   Look up a value at the leftmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeLookupMin :: Radix1Tree a -> (# a #)
 unsafeLookupMin = unsafeLookupMin1
 
 -- | \(\mathcal{O}(k)\).
 --   Look up a value at the leftmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeLookupMinWithKey :: Radix1Tree a -> Lookup1 a
 unsafeLookupMinWithKey = unsafeLookupMinWithKey1
 
 -- | \(\mathcal{O}(1)\texttt{+}, \mathcal{O}(k)\).
 --   Delete a value at the leftmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeDeleteMin :: Radix1Tree a -> Radix1Tree a
 unsafeDeleteMin = unsafeDeleteMin1
 
 -- | \(\mathcal{O}(1)\texttt{+}, \mathcal{O}(k)\).
 --   Update a value at the leftmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeAdjustMin :: (a -> a) -> Radix1Tree a -> Radix1Tree a
 unsafeAdjustMin = unsafeAdjustMin1
 
 -- | \(\mathcal{O}(1)\texttt{+}, \mathcal{O}(k)\).
 --   Update a value at the leftmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeAdjustMinWithKey :: (Build1 -> a -> a) -> Radix1Tree a -> Radix1Tree a
 unsafeAdjustMinWithKey = unsafeAdjustMinWithKey1
 
 -- | \(\mathcal{O}(1)\texttt{+}, \mathcal{O}(k)\).
 --   Update or delete a value at the leftmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeUpdateMin :: (a -> Maybe a) -> Radix1Tree a -> Radix1Tree a
 unsafeUpdateMin = unsafeUpdateMin1
 
 -- | \(\mathcal{O}(1)\texttt{+}, \mathcal{O}(k)\).
 --   Update or delete a value at the leftmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeUpdateMinWithKey :: (Build1 -> a -> Maybe a) -> Radix1Tree a -> Radix1Tree a
 unsafeUpdateMinWithKey = unsafeUpdateMinWithKey1
 
 -- | \(\mathcal{O}(\min(x,k))\).
 --   Look up the leftmost value and return it alongside the tree without it.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeMinView :: Radix1Tree a -> ViewL1 a
 unsafeMinView = unsafeMinView1
 
@@ -144,56 +144,56 @@ unsafeMinView = unsafeMinView1
 -- | \(\mathcal{O}(k)\).
 --   Look up a value at the rightmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeLookupMax :: Radix1Tree a -> (# a #)
 unsafeLookupMax = unsafeLookupMax1
 
 -- | \(\mathcal{O}(k)\).
 --   Look up a value at the rightmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeLookupMaxWithKey :: Radix1Tree a -> Lookup1 a
 unsafeLookupMaxWithKey = unsafeLookupMaxWithKey1
 
 -- | \(\mathcal{O}(1)\texttt{+}, \mathcal{O}(k)\).
 --   Delete a value at the rightmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeDeleteMax :: Radix1Tree a -> Radix1Tree a
 unsafeDeleteMax = unsafeDeleteMax1
 
 -- | \(\mathcal{O}(1)\texttt{+}, \mathcal{O}(k)\).
 --   Update a value at the rightmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeAdjustMax :: (a -> a) -> Radix1Tree a -> Radix1Tree a
 unsafeAdjustMax = unsafeAdjustMax1
 
 -- | \(\mathcal{O}(1)\texttt{+}, \mathcal{O}(k)\).
 --   Update a value at the rightmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeAdjustMaxWithKey :: (Build1 -> a -> a) -> Radix1Tree a -> Radix1Tree a
 unsafeAdjustMaxWithKey = unsafeAdjustMaxWithKey1
 
 -- | \(\mathcal{O}(1)\texttt{+}, \mathcal{O}(k)\).
 --   Update or delete a value at the rightmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeUpdateMax :: (a -> Maybe a) -> Radix1Tree a -> Radix1Tree a
 unsafeUpdateMax = unsafeUpdateMax1
 
 -- | \(\mathcal{O}(1)\texttt{+}, \mathcal{O}(k)\).
 --   Update or delete a value at the rightmost key in the tree.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeUpdateMaxWithKey :: (Build1 -> a -> Maybe a) -> Radix1Tree a -> Radix1Tree a
 unsafeUpdateMaxWithKey = unsafeUpdateMaxWithKey1
 
 -- | \(\mathcal{O}(\min(x,k))\).
 --   Look up the rightmost value and return it alongside the tree without it.
 --
---   Throws 'MalformedTree' if the tree is empty.
+--   Throws t'MalformedTree' if the tree is empty.
 unsafeMaxView :: Radix1Tree a -> ViewR1 a
 unsafeMaxView = unsafeMaxView1
 

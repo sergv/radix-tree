@@ -69,21 +69,6 @@ module Data.Radix1Tree.Word8.Lazy
   , Data.Radix1Tree.Word8.Lazy.member
   , subtree
 
-    -- *** Chunked
-    --
-    -- | Chunked lookup allows providing the key piece by piece while retaining
-    --   the ability to check for early failure.
-    --
-    --   Note that while 'subtree' can be used to achieve the same result,
-    --   it is more expensive allocation-wise, as it must ensure that
-    --   the resulting tree is well-formed after each chunk application.
-  , Cursor
-  , cursor
-  , move
-  , stop
-  , Location (..)
-  , locate
-
     -- ** Insert
   , insert
   , insertWith
@@ -455,18 +440,6 @@ subtree = subtree1
 --   Prefix the root of the tree with the given key.
 prefix :: Feed1 -> RadixTree a -> Radix1Tree a
 prefix = prefix1
-
-
--- | \(\mathcal{O}(1)\).
---   Make a cursor that points to the root of the tree.
-cursor :: Radix1Tree a -> Cursor a
-cursor = cursor1
-
-{-# INLINE move #-}
--- | \(\mathcal{O}(\min(x,k))\).
---   Move the cursor down by the extent of the given key.
-move :: Feed1 -> Cursor a -> Cursor a
-move = move1
 
 
 

@@ -66,21 +66,6 @@ module Data.RadixTree.Word8.Strict
   , Data.RadixTree.Word8.Strict.member
   , subtree
 
-    -- *** Chunked
-    --
-    -- | Chunked lookup allows providing the key piece by piece while retaining
-    --   the ability to check for early failure.
-    --
-    --   Note that while 'subtree' can be used to achieve the same result,
-    --   it is more expensive allocation-wise, as it must ensure that
-    --   the resulting tree is well-formed after each chunk application.
-  , Cursor
-  , cursor
-  , move
-  , stop
-  , Location (..)
-  , locate
-
     -- ** Insert
   , insert
   , insertWith
@@ -488,18 +473,6 @@ prefix :: Feed -> RadixTree a -> RadixTree a
 prefix = prefix0
 
 
--- | \(\mathcal{O}(1)\).
---   Make a cursor that points to the root of the tree.
-cursor :: RadixTree a -> Cursor a
-cursor = cursor0
-
-{-# INLINE move #-}
--- | \(\mathcal{O}(\min(x,k))\).
---   Move the cursor down by the extent of the given key.
-move :: Feed -> Cursor a -> Cursor a
-move = move0
-
-
 
 {-# INLINE insert #-}
 -- | \(\mathcal{O}(\min(x,k))\).
@@ -575,7 +548,7 @@ alter = alter0
 -- | \(\mathcal{O}(\min(x,k))\).
 --   Update the part of the tree at the given prefix.
 --
---   The resulting 'RadixTree' is evaluated to WHNF.
+--   The resulting t'RadixTree' is evaluated to WHNF.
 shape :: (RadixTree a -> RadixTree a) -> Feed -> RadixTree a -> RadixTree a
 shape = shape0
 

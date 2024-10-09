@@ -320,9 +320,11 @@ unsafeFeedText1 (Strict.Text (Array.ByteArray arr) n len) =
 
 
 
-data CarryBS = CarryBS Int Strict.ByteString Lazy.ByteString
+data CarryBS = CarryBS
+                 {-# UNPACK #-} !Int
+                 !Strict.ByteString
+                 !Lazy.ByteString
 
-{-# INLINE stepLazyByteString #-}
 stepLazyByteString :: CarryBS -> Step Word8 CarryBS
 stepLazyByteString (CarryBS n bs lbs) =
   if n >= BS.length bs
@@ -348,9 +350,12 @@ unsafeFeedLazyByteString1 bs lbs =
 
 
 
-data CarryTxt = CarryTxt Int Int ByteArray Lazy.Text
+data CarryTxt = CarryTxt
+                  {-# UNPACK #-} !Int
+                  {-# UNPACK #-} !Int
+                  !ByteArray
+                  !Lazy.Text
 
-{-# INLINE stepLazyText #-}
 stepLazyText :: CarryTxt -> Step Word8 CarryTxt
 stepLazyText (CarryTxt n len arr t) =
   if n >= len
