@@ -77,19 +77,6 @@ module Data.RadixNTree.Word8.Strict
   , subtree1
   , prefix1
 
-  , Point (..)
-  , Cursor (..)
-  , stop
-
-  , Location (..)
-  , locate
-
-  , cursor0
-  , move0
-
-  , cursor1
-  , move1
-
   , lookupL0
   , lookupL1
 
@@ -330,7 +317,6 @@ import           Data.RadixNTree.Word8.Common
 import           Data.RadixNTree.Word8.Key
 import           Radix.Common
 import           Radix.Exception
-import           Radix.Word8.Common
 import           Radix.Word8.Foundation
 
 import           Control.Applicative
@@ -1206,98 +1192,6 @@ prefix_ step = \ !w !z (RadixTree mx t) ->
         Nil           -> Nil
 
     Just _  -> Tip (fromStep step w z) mx t
-
-
-
--- | Current position in the tree.
-data Point = -- | Above a node.
-             Seam
-
-             -- | In the middle of a 'Tip'.
-           | Plane
-               {-# UNPACK #-} !Int       -- ^ Always greater than @0@ and smaller than
-                                         --   the length of the 'ByteArray'.
-               {-# UNPACK #-} !ByteArray
-
--- | A particular point in the tree.
-data Cursor a = -- | This is effectively a 'Tip' where the 'ByteArray' is optional.
-                Cursor
-                  {-# UNPACK #-} !Point
-                  {-# UNPACK #-} !(Maybe a)
-                  !(Radix1Tree a)
-
-instance Show a => Show (Cursor a) where
-  showsPrec d c =
-    showParen (d > 10) $
-      showString "Cursor " . showsPrec 11 (stop c)
-
-cursor0 :: RadixTree a -> Cursor a
-cursor0 (RadixTree mx t) = Cursor Seam mx t
-
-cursor1 :: Radix1Tree a -> Cursor a
-cursor1 = Cursor Seam Nothing
-
-{-# INLINE move0 #-}
-move0 :: Feed -> Cursor a -> Cursor a
-move0 (Feed feed) = \c ->
-  feed $ \step s ->
-    case step s of
-      More w z -> move_ step w z c
-      Done     -> c
-
-{-# INLINE move1 #-}
-move1 :: Feed1 -> Cursor a -> Cursor a
-move1 (Feed1 w feed) = feed $ \step -> move_ step w
-
-{-# INLINE move_ #-}
-move_ :: (x -> Step Word8 x) -> Word8 -> x -> Cursor a -> Cursor a
-move_ step = \w s (Cursor point mx dx) ->
-  case point of
-    Seam        -> go w s dx
-    Plane i arr -> goarr arr mx dx w s i
-  where
-    go !w !s t =
-      case t of
-        Bin p l r     -> go w s $ if w < p
-                                    then l
-                                    else r
-
-        Tip brr my dy -> goarr brr my dy w s 0
-
-        Nil           -> Cursor Seam Nothing Nil
-
-    goarr arr mx dx = goarr_
-      where
-        goarr_ w !s n
-          | w == indexByteArray arr n =
-              let !n' = n + 1
-              in case step s of
-                   More v z
-                     | n' >= sizeofByteArray arr -> go v z dx
-                     | otherwise                 -> goarr_ v z n'
-
-                   Done      ->
-                     let !point'
-                           | n' >= sizeofByteArray arr = Seam
-                           | otherwise                 = Plane n' arr
-
-                     in Cursor point' mx dx
-
-          | otherwise = Cursor Seam Nothing Nil
-
--- | \(\mathcal{O}(1)\).
---   Retrieve the value at which the cursor points.
-stop :: Cursor a -> Maybe a
-stop (Cursor point mx _) =
-  case point of
-    Seam -> mx
-    _    -> Nothing
-
--- | \(\mathcal{O}(1)\).
---   Determine whether the cursor points to a point within the tree.
-locate :: Cursor a -> Location
-locate (Cursor _ Nothing Nil) = Outside
-locate _                      = Inside
 
 
 

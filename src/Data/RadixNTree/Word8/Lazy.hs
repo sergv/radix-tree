@@ -1143,11 +1143,11 @@ data Point = -- | Above a node.
              -- | In the middle of a 'Tip'.
            | Plane
                {-# UNPACK #-} !Int       -- ^ Always greater than @0@ and smaller than
-                                         --   the length of the 'ByteArray'.
+                                         --   the length of the t'ByteArray'.
                {-# UNPACK #-} !ByteArray
 
 -- | A particular point in the tree.
-data Cursor a = -- | This is effectively a 'Tip' where the 'ByteArray' is optional.
+data Cursor a = -- | This is effectively a 'Tip' where the t'ByteArray' is optional.
                 Cursor
                   {-# UNPACK #-} !Point
                   {-# UNPACK #-} !(Maybe a)
