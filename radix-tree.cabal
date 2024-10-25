@@ -1,5 +1,5 @@
 name:          radix-tree
-version:       1.0.0.2
+version:       1.1.0.0
 
 category:      Data Structures
 synopsis:      Radix trees
@@ -45,6 +45,7 @@ library
                     Data.RadixTree.Word8.Lazy.Unsafe
                     Data.RadixTree.Word8.Strict
                     Data.RadixTree.Word8.Strict.Debug
+                    Data.RadixTree.Word8.Strict.Pointer
                     Data.RadixTree.Word8.Strict.TH
                     Data.RadixTree.Word8.Strict.Unsafe
 
@@ -54,10 +55,13 @@ library
                     Data.Radix1Tree.Word8.Lazy.Debug
                     Data.Radix1Tree.Word8.Lazy.TH
                     Data.Radix1Tree.Word8.Lazy.Unsafe
+                    Data.Radix1Tree.Word8.Lazy.Zipper
                     Data.Radix1Tree.Word8.Strict
                     Data.Radix1Tree.Word8.Strict.Debug
+                    Data.Radix1Tree.Word8.Strict.Pointer
                     Data.Radix1Tree.Word8.Strict.TH
                     Data.Radix1Tree.Word8.Strict.Unsafe
+                    Data.Radix1Tree.Word8.Strict.Zipper
 
                     Data.Zebra.Word
                     Data.Zebra.Word.Debug
@@ -80,6 +84,7 @@ library
                     Data.RadixNTree.Word8.Lazy.TH
                     Data.RadixNTree.Word8.Strict
                     Data.RadixNTree.Word8.Strict.Debug
+                    Data.RadixNTree.Word8.Strict.Pointer
                     Data.RadixNTree.Word8.Strict.TH
 
                     Data.Zebra.Word.Internal
@@ -88,7 +93,6 @@ library
 
                     Radix.Common
                     Radix.Exception
-                    Radix.Word8.Common
                     Radix.Word8.Debug
                     Radix.Word8.Foundation
                     Radix.Word.Common
