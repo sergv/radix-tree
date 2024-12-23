@@ -61,6 +61,10 @@ module Data.Patricia.Word.Strict
   , insertWith
   , insertWith'
 
+    -- | === Swap
+  , Swap (..)
+  , swap
+
     -- ** Map
   , adjust
   , adjust'

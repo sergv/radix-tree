@@ -1,3 +1,7 @@
+## 1.1.1.0 -- December 2024
+
+* Added `swap` function to strict PATRICIA and radix tree modules.
+
 ## 1.1.0.0 -- October 2024
 
 * Added `Zipper` modules for non-empty radix trees;

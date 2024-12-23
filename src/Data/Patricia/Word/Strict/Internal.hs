@@ -65,6 +65,9 @@ module Data.Patricia.Word.Strict.Internal
   , insertWith
   , insertWith'
 
+  , Swap (..)
+  , swap
+
   , adjust
   , adjust'
 
@@ -1456,6 +1459,38 @@ insertWith' f !w b = go
           | otherwise -> join w (b `seq` Tip w b) k t
 
         Nil -> Tip w b
+
+
+
+-- | Result of a value swap.
+data Swap a = Swap !(Maybe a) !(Patricia a)
+              deriving Show
+
+-- | \(\mathcal{O}(\min(n,W))\).
+--   Insert a new value in the tree at the given key.
+--   If a value already exists at that key, it is returned alongside the tree.
+swap :: Word -> a -> Patricia a -> Swap a
+swap !w a = \t ->
+  let (# mb, t' #) = go t
+  in Swap mb t'
+  where
+    go t =
+      case t of
+        Bin p l r
+          | beyond p w -> (# Nothing, join w (Tip w a) p t #)
+
+          | w < p      -> let !(# mb, l' #) = go l
+                          in (# mb, Bin p l' r #)
+
+          | otherwise  -> let !(# mb, r' #) = go r
+                          in (# mb, Bin p l r' #)
+
+        Tip k b
+          | k == w    -> (# Just b, Tip k a #)
+          | otherwise -> (# Nothing, join w (Tip w a) k t #)
+
+        Nil -> (# Nothing, Tip w a #)
+
 
 
 

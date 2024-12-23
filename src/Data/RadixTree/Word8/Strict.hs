@@ -71,6 +71,10 @@ module Data.RadixTree.Word8.Strict
   , insertWith
   , insertWith'
 
+    -- | === Swap
+  , Swap (..)
+  , swap
+
     -- ** Map
   , adjust
   , adjust'
@@ -496,6 +500,14 @@ insertWith = insertWith0
 --   New value is evaluated to WHNF.
 insertWith' :: (a -> a) -> Feed -> a -> RadixTree a -> RadixTree a
 insertWith' = insertWith0'
+
+
+{-# INLINE swap #-}
+-- | \(\mathcal{O}(\min(x,k))\).
+--   Insert a new value in the tree at the given key.
+--   If a value already exists at that key, it is returned alongside the tree.
+swap :: Feed -> a -> RadixTree a -> Swap a
+swap = swap0
 
 
 {-# INLINE adjust #-}
