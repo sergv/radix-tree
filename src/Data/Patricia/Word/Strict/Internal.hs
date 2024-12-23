@@ -1477,19 +1477,25 @@ swap !w a = \t ->
     go t =
       case t of
         Bin p l r
-          | beyond p w -> (# Nothing, join w (Tip w a) p t #)
+          | beyond p w -> let !t' = join w (Tip w a) p t
+                          in (# Nothing, t'#)
 
           | w < p      -> let !(# mb, l' #) = go l
-                          in (# mb, Bin p l' r #)
+                              !t' = Bin p l' r
+                          in (# mb, t' #)
 
           | otherwise  -> let !(# mb, r' #) = go r
-                          in (# mb, Bin p l r' #)
+                              !t' = Bin p l r'
+                          in (# mb, t' #)
 
         Tip k b
-          | k == w    -> (# Just b, Tip k a #)
-          | otherwise -> (# Nothing, join w (Tip w a) k t #)
+          | k == w    -> let !t' = Tip k a
+                         in (# Just b, t' #)
+          | otherwise -> let !t' = join w (Tip w a) k t
+                         in (# Nothing, t' #)
 
-        Nil -> (# Nothing, Tip w a #)
+        Nil -> let !t' = Tip w a
+               in (# Nothing, t' #)
 
 
 

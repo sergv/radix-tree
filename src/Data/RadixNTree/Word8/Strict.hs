@@ -4173,10 +4173,12 @@ swap_ a step = go
                           in (# Nothing, t' #)
 
           | w < p      -> let !(# mb, l' #) = go w s l
-                          in (# mb, Bin p l' r #)
+                              !t' = Bin p l' r
+                          in (# mb, t' #)
 
           | otherwise  -> let !(# mb, r' #) = go w s r
-                          in (# mb, Bin p l r' #)
+                              !t' = Bin p l r'
+                          in (# mb, t' #)
 
         Tip arr mx dx -> goarr w s 0
           where
@@ -4185,36 +4187,37 @@ swap_ a step = go
                   if n + 1 >= sizeofByteArray arr
                     then case step z of
                            More u z' -> let !(# mb, dy #) = go u z' dx
-                                        in (# mb, Tip arr mx dy #)
+                                            !t' = Tip arr mx dy
+                                        in (# mb, t' #)
 
-                           Done      -> let !dy = Tip arr (Just a) dx
-                                        in (# mx, dy #)
+                           Done      -> let !t' = Tip arr (Just a) dx
+                                        in (# mx, t' #)
 
                     else case step z of
                            More u z' -> goarr u z' (n + 1)
                            Done      ->
                              let !(# !brr, !crr #) = splitByteArray 0 (n + 1) arr
 
-                                 !dy = Tip brr (Just a) (Tip crr mx dx)
+                                 !t' = Tip brr (Just a) (Tip crr mx dx)
 
-                             in (# Nothing, dy #)
+                             in (# Nothing, t' #)
 
               | n == 0    =
-                  let !dy = join
+                  let !t' = join
                               (indexByteArray arr 0) t
                               w (singleton_ step w s a)
 
-                  in (# Nothing, dy #)
+                  in (# Nothing, t' #)
 
               | otherwise =
                   let !(# !brr, !crr #) = splitByteArray 0 n arr
 
-                      !dy = Tip brr Nothing $
+                      !t' = Tip brr Nothing $
                               join
                                 (indexByteArray crr 0) (Tip crr mx dx)
                                 v (singleton_ step v z a)
 
-                  in (# Nothing, dy #)
+                  in (# Nothing, t' #)
 
         Nil -> let !t' = singleton_ step w s a
                in (# Nothing, t' #)
