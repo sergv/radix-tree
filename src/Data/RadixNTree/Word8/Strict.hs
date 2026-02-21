@@ -172,6 +172,11 @@ module Data.RadixNTree.Word8.Strict
   , insertWith1
   , insertWith1'
 
+  , Swap (..)
+  , Swap1 (..)
+  , swap0
+  , swap1
+
   , adjust0
   , adjust0'
 
@@ -4123,6 +4128,101 @@ insertWith'_ f a step = go
                          v (singleton_ step v z a)
 
         Nil -> singleton_ step w s a
+
+
+
+-- | Result of a value swap.
+data Swap a = Swap !(Maybe a) !(RadixTree a)
+              deriving Show
+
+{-# INLINE swap0 #-}
+swap0 :: Feed -> a -> RadixTree a -> Swap a
+swap0 (Feed feed) a = \(RadixTree mx t) ->
+  feed $ \step s ->
+    case step s of
+      More w z -> let !(# mb, t' #) = swap_ a step w z t
+                  in Swap mb $ RadixTree mx t'
+
+      Done     -> Swap mx $ RadixTree (Just a) t
+
+
+-- | Result of a value swap.
+data Swap1 a = Swap1 !(Maybe a) !(Radix1Tree a)
+               deriving Show
+
+{-# INLINE swap1 #-}
+swap1 :: Feed1 -> a -> Radix1Tree a -> Swap1 a
+swap1 (Feed1 w feed) a = \t ->
+  feed $ \step s ->
+    let !(# mb, t' #) = swap_ a step w s t
+    in Swap1 mb t'
+
+
+{-# INLINE swap_ #-}
+swap_
+  :: a -> (x -> Step Word8 x) -> Word8 -> x -> Radix1Tree a -> (# Maybe a, Radix1Tree a #)
+swap_ a step = go
+  where
+    go !w !s t =
+      case t of
+        Bin p l r
+          | beyond p w -> let !t' = join
+                                      w (singleton_ step w s a)
+                                      p t
+
+                          in (# Nothing, t' #)
+
+          | w < p      -> let !(# mb, l' #) = go w s l
+                              !t' = Bin p l' r
+                          in (# mb, t' #)
+
+          | otherwise  -> let !(# mb, r' #) = go w s r
+                              !t' = Bin p l r'
+                          in (# mb, t' #)
+
+        Tip arr mx dx -> goarr w s 0
+          where
+            goarr v !z n
+              | v == indexByteArray arr n =
+                  if n + 1 >= sizeofByteArray arr
+                    then case step z of
+                           More u z' -> let !(# mb, dy #) = go u z' dx
+                                            !t' = Tip arr mx dy
+                                        in (# mb, t' #)
+
+                           Done      -> let !t' = Tip arr (Just a) dx
+                                        in (# mx, t' #)
+
+                    else case step z of
+                           More u z' -> goarr u z' (n + 1)
+                           Done      ->
+                             let !(# !brr, !crr #) = splitByteArray 0 (n + 1) arr
+
+                                 !t' = Tip brr (Just a) (Tip crr mx dx)
+
+                             in (# Nothing, t' #)
+
+              | n == 0    =
+                  let !t' = join
+                              (indexByteArray arr 0) t
+                              w (singleton_ step w s a)
+
+                  in (# Nothing, t' #)
+
+              | otherwise =
+                  let !(# !brr, !crr #) = splitByteArray 0 n arr
+
+                      !t' = Tip brr Nothing $
+                              join
+                                (indexByteArray crr 0) (Tip crr mx dx)
+                                v (singleton_ step v z a)
+
+                  in (# Nothing, t' #)
+
+        Nil -> let !t' = singleton_ step w s a
+               in (# Nothing, t' #)
+
+
 
 
 

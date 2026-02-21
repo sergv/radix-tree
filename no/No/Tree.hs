@@ -35,6 +35,7 @@ module No.Tree
 
   , insert
   , insertWith
+  , swap
   , adjust
   , delete
   , update
@@ -220,6 +221,11 @@ insert k a = alter (\_ -> Just a) k
 
 insertWith :: Ord k => (a -> a) -> k -> a -> NoTree k a -> NoTree k a
 insertWith f k a = alter (Just . maybe a f) k
+
+swap :: Ord k => k -> a -> NoTree k a -> (Maybe a, NoTree k a)
+swap k a no =
+  let ~(NoTree as, mb, NoTree bs) = splitLookup k no
+  in (mb, NoTree $ as <> ((k, a) :<| bs))
 
 adjust :: Ord k => (a -> a) -> k -> NoTree k a -> NoTree k a
 adjust f = alter (fmap f)

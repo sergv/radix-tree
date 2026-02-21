@@ -126,6 +126,13 @@ maxViewEq (Just (Pat.ViewR pat (Pat.Lookup k a))) (Just (no, l, b)) =
 maxViewEq Nothing Nothing = True
 maxViewEq _       _       = False
 
+type SwapT s a =
+       Test s (Patricia a) (NoTree Word a)
+         (Pat.Swap a) (Maybe a, NoTree Word a)
+
+swapEq :: Eq a => Pat.Swap a -> (Maybe a, NoTree Word a) -> Bool
+swapEq (Pat.Swap mx pat) (my, no) = mx == my && treeEq pat no
+
 
 
 lookupT, dirtyLookupT :: Eq a => IdT Word a (Maybe a)
@@ -164,6 +171,9 @@ insertWithT_
 insertWithT_ g =
   let f x = (+ fromIntegral x)
   in Test treeEq (\(k, a) -> g (f a) k a) (\(k, a) -> No.insertWith (f a) k a)
+
+swapT :: Eq a => SwapT (Word, a) a
+swapT = Test swapEq (uncurry Pat.swap) (uncurry No.swap)
 
 adjustT, adjustT' :: (Eq a, Integral a) => TreeT (Word, a) a
 adjustT  = adjustT_ Pat.adjust
@@ -773,6 +783,7 @@ test = do
     it "insert"           $ run unary1  insertT
     it "insertWith"       $ run unary1  insertWithT
     it "insertWith'"      $ run unary1  insertWithT'
+    it "swap"             $ run unary1  swapT
     it "adjust"           $ run unary1  adjustT
     it "adjust'"          $ run unary1  adjustT'
     it "delete"           $ run unary1_ deleteT

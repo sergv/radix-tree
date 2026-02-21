@@ -123,6 +123,13 @@ maxViewEq (Just (Radix.ViewR t k a)) (Just (no, l, b)) =
 maxViewEq Nothing                    Nothing           = True
 maxViewEq _                          _                 = False
 
+type SwapT s a =
+       Test s (RadixTree a) (NoTree [Word8] a)
+         (Radix.Swap a) (Maybe a, NoTree [Word8] a)
+
+swapEq :: Eq a => Radix.Swap a -> (Maybe a, NoTree [Word8] a) -> Bool
+swapEq (Radix.Swap mx pat) (my, no) = mx == my && treeEq pat no
+
 
 
 lookupT :: Eq a => IdT [Word8] a (Maybe a)
@@ -226,6 +233,9 @@ insertWithT_ g =
   let f x = (+ fromIntegral x)
   in Test treeEq (\(k, a) -> g (f a) (Radix.feedBytes k) a)
                  (\(k, a) -> No.insertWith (f a) k a)
+
+swapT :: Eq a => SwapT ([Word8], a) a
+swapT = Test swapEq (\(k, i) -> Radix.swap (Radix.feedBytes k) i) (uncurry No.swap)
 
 adjustT, adjustT' :: (Eq a, Integral a) => TreeT ([Word8], a) a
 adjustT  = adjustT_ Radix.adjust
@@ -783,6 +793,7 @@ test = do
     it "insert"           $ run unary1  insertT
     it "insertWith"       $ run unary1  insertWithT
     it "insertWith'"      $ run unary1  insertWithT'
+    it "swap"             $ run unary1  swapT
     it "adjust"           $ run unary1  adjustT
     it "adjust'"          $ run unary1  adjustT'
     it "delete"           $ run unary1_ deleteT
